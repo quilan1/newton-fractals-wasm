@@ -10,11 +10,10 @@ services:
     image: node:latest
     working_dir: /newton
     command: [ "./startup.sh", "web" ]
-    # command: ["tail", "-f", "/dev/null"]
-    ports: [ "8080:8080" ]
+    ports: [ "3000:3000" ]
     depends_on:
       rust-compilation:
         condition: service_completed_successfully
     volumes:
       - ./:/newton
-      - /newton/www/node_modules/
+      - /newton/frontend/node_modules/

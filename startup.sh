@@ -11,9 +11,9 @@ fi
 
 if [ "$MODE" = "rust" ]; then
     cargo install wasm-pack
-    wasm-pack build --release;
+    wasm-pack build -t bundler -d frontend/src/pkg --release;
 else
-    cd www
+    cd frontend
     corepack enable pnpm
     pnpm i
     pnpm build
