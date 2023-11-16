@@ -1,0 +1,20 @@
+services:
+  rust-compilation:
+    image: rust:1.72
+    working_dir: /newton
+    command: [ "./startup.sh", "rust" ]
+    volumes:
+      - ./:/newton
+
+  web:
+    image: node:latest
+    working_dir: /newton
+    command: [ "./startup.sh", "web" ]
+    # command: ["tail", "-f", "/dev/null"]
+    ports: [ "8080:8080" ]
+    depends_on:
+      rust-compilation:
+        condition: service_completed_successfully
+    volumes:
+      - ./:/newton
+      - /newton/www/node_modules/
