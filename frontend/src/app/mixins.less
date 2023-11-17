@@ -1,0 +1,43 @@
+// @color-bg-body: #222;
+// @color-bg-content: #444;
+// @color-bg-header-selected: @color-bg-content;
+// @color-bg-header-not-selected: #888;
+// @color-bg-input: #AAA;
+// @color-bg-table: #BBB;
+// @color-bg-table-header: #666;
+// @color-bg-error: #C77;
+
+// @color-fg-border: #222;
+// @color-fg-label: #CCC;
+// @color-fg-divider: #444;
+// @color-fg-divider-border: #888;
+
+.dark-content() {
+    background-color: @color-bg-content;
+
+    label {
+        color: @color-fg-label;
+    }
+}
+
+.light-content() {
+    background-color: @color-bg-table;
+
+    label {
+        color: @color-fg-border;
+    }
+}
+
+.flex(@direction, @gap: normal, @align: normal) {
+    display: flex;
+    flex-direction: @direction;
+    gap: @gap;
+    align-items: @align;
+}
+
+.grid(@gap: 0.5rem, @rows: auto, @columns: auto) {
+    display: grid;
+    gap: @gap;
+    grid-template-rows: @rows;
+    grid-template-columns: @columns;
+}

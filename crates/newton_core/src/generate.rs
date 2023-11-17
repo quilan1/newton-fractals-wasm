@@ -1,7 +1,28 @@
-use crate::raster::Image;
+use wasm_bindgen::{Clamped, JsValue, UnwrapThrowExt};
+
 use crate::config::Config;
-use crate::newton::newton;
 use crate::func::Func;
+use crate::newton::newton;
+use crate::raster::Image;
+
+pub fn generate_row(ctx: &web_sys::CanvasRenderingContext2d, row: i32) -> Result<(), JsValue> {
+    let f = Func::from_cp(vec![1, -3, 1, -1], vec![13, 6, 1, 0]);
+    let canvas = ctx.canvas().unwrap_throw();
+    let (width, height) = (canvas.width() as usize, canvas.height() as usize);
+
+    let config = Config::new(width, height, 200, 2.0, false);
+    let mut buffer = vec![0; 4 * config.width];
+    crate::newton::newton_row(&config, &f, row as usize, &mut buffer);
+
+    let data = web_sys::ImageData::new_with_u8_clamped_array(Clamped(&buffer), width as u32)?;
+    ctx.put_image_data(&data, 0.0, row as f64)?;
+
+    // let perf = web_sys::window().unwrap().performance().unwrap();
+    // let start = perf.now() as u64;
+    // while perf.now() as u64 - start < 50 {}
+
+    Ok(())
+}
 
 pub fn generate_saved(polynomial: &str, config: &Config, method: i32) -> Image {
     use std::str::FromStr;
@@ -17,14 +38,15 @@ pub fn generate_saved(polynomial: &str, config: &Config, method: i32) -> Image {
         0 => newton::<crate::newton::Newton>(config, &f, &mut image),
         1 => newton::<crate::newton::Halley>(config, &f, &mut image),
         2 => newton::<crate::newton::Householder3>(config, &f, &mut image),
-        _ => ()
+        _ => (),
     }
 
     image
 }
 
 pub fn generate_random<T>(config: &Config) -> (Image, Func)
-    where T : crate::newton::Householder
+where
+    T: crate::newton::Householder,
 {
     use rand::distributions::{Distribution, Uniform};
 
@@ -41,7 +63,9 @@ pub fn generate_random<T>(config: &Config) -> (Image, Func)
         ($coef_uni: expr, $pow_uni: expr) => {
             loop {
                 let c = $coef_uni.sample(&mut rng);
-                if c == 0 { continue; }
+                if c == 0 {
+                    continue;
+                }
                 coef.push(c);
                 break;
             }

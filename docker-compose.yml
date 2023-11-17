@@ -2,18 +2,19 @@ services:
   rust-compilation:
     image: rust:1.72
     working_dir: /newton
-    command: [ "./startup.sh", "rust" ]
+    command: [ "./setup.sh" ]
     volumes:
-      - ./:/newton
+      - ./crates:/newton
+      - ./frontend:/frontend
 
   web:
     image: node:latest
     working_dir: /newton
-    command: [ "./startup.sh", "web" ]
+    command: [ "./setup.sh" ]
     ports: [ "3000:3000" ]
     depends_on:
       rust-compilation:
         condition: service_completed_successfully
     volumes:
-      - ./:/newton
-      - /newton/frontend/node_modules/
+      - ./frontend:/newton
+      - /newton/node_modules/

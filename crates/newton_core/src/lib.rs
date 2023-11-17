@@ -5,12 +5,12 @@ macro_rules! log {
     }
 }
 
-mod roots;
-mod func;
-mod newton;
-mod generate;
-mod raster;
 mod config;
+mod func;
+mod generate;
+mod newton;
+mod raster;
+mod roots;
 
 use wasm_bindgen::prelude::*;
 
@@ -23,4 +23,9 @@ pub fn run() {
 #[wasm_bindgen]
 pub fn render(polynomial: &str, config: config::Config, method: i32) -> raster::Image {
     crate::generate::generate_saved(polynomial, &config, method)
+}
+
+#[wasm_bindgen]
+pub fn render2(ctx: &web_sys::CanvasRenderingContext2d, row: i32) -> Result<(), JsValue> {
+    generate::generate_row(ctx, row)
 }

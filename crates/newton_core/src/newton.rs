@@ -1,19 +1,20 @@
 use num::complex::Complex64 as Complex;
 
-use crate::raster::{Image, Color};
 use crate::config::Config;
-use crate::roots::Roots;
 use crate::func::Func;
+use crate::raster::{Color, Image};
+use crate::roots::Roots;
 
 pub fn newton<T>(config: &Config, f: &Func, image: &mut Image)
-    where T : Householder
+where
+    T: Householder,
 {
     let mut roots = Roots::new();
 
     let z_min = Complex::new(config.window.re0, config.window.im0);
     let z_max = Complex::new(config.window.re1, config.window.im1);
 
-    let mut brightness = Vec::<(f64,u8)>::with_capacity(config.width * config.height);
+    let mut brightness = Vec::<(f64, u8)>::with_capacity(config.width * config.height);
     // let mut max_brightness = Vec::<f64>::with_capacity(config.width * config.height);
     let mut max_brightness = 0.;
 
@@ -29,18 +30,28 @@ pub fn newton<T>(config: &Config, f: &Func, image: &mut Image)
             let color = if iloop < config.loopmax {
                 roots.find_root(config, &z).color
             } else {
-                Color { r: 0, g: 0, b: 0, a: 0 }
+                Color {
+                    r: 0,
+                    g: 0,
+                    b: 0,
+                    a: 0,
+                }
             };
 
             // Calculate the shading
-            let s = fz.norm() / config.zero;    // How far are we from the zero, when we bailed the loop
-            let s = -f64::log(s, 10.);          // Let's shade it logarithmically
+            let s = fz.norm() / config.zero; // How far are we from the zero, when we bailed the loop
+            let s = -f64::log(s, 10.); // Let's shade it logarithmically
             brightness.push((s, iloop as u8));
             // max_brightness.push(s);
             max_brightness = f64::max(max_brightness, s);
 
             let color = if config.show_loops {
-                Color { r: 255, g: 255, b: 255, a: 255 }
+                Color {
+                    r: 255,
+                    g: 255,
+                    b: 255,
+                    a: 255,
+                }
             } else {
                 color
             };
@@ -72,7 +83,7 @@ pub fn newton<T>(config: &Config, f: &Func, image: &mut Image)
                 r: (color.r as f64 * s) as u8,
                 g: (color.g as f64 * s) as u8,
                 b: (color.b as f64 * s) as u8,
-                a: 0
+                a: 0,
             };
 
             image.set_pixel(index, color);
@@ -80,14 +91,51 @@ pub fn newton<T>(config: &Config, f: &Func, image: &mut Image)
     }
 }
 
+pub fn newton_row(config: &Config, f: &Func, y: usize, buffer: &mut [u8]) {
+    let mut roots = Roots::new();
+
+    let z_min = Complex::new(config.window.re0, config.window.im0);
+    let z_max = Complex::new(config.window.re1, config.window.im1);
+
+    let range_real = z_max.re - z_min.re;
+    let range_imag = z_max.im - z_min.im;
+
+    for x in 0..config.width {
+        let real = x as f64 / config.width as f64 * range_real + z_min.re;
+        let imag = y as f64 / config.height as f64 * range_imag + z_min.im;
+
+        let z = Complex::new(real, imag);
+        let (z, fz, iloop) = newton_iter::<Newton>(config, f, z);
+        let color = if iloop < config.loopmax {
+            roots.find_root(config, &z).color
+        } else {
+            Color {
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 0,
+            }
+        };
+
+        let index = 4 * x;
+        buffer[index] = color.r;
+        buffer[index + 1] = color.g;
+        buffer[index + 2] = color.b;
+        buffer[index + 3] = 255;
+    }
+}
+
 // #[inline(never)]
 fn newton_iter<T>(config: &Config, f: &Func, mut z: Complex) -> (Complex, Complex, usize)
-    where T : Householder
+where
+    T: Householder,
 {
     let mut fz;
     for counter in 0..config.loopmax {
         fz = f.fz(&z);
-        if fz.norm() < config.zero { return (z, fz, counter); }
+        if fz.norm() < config.zero {
+            return (z, fz, counter);
+        }
         z += T::iter(f, &fz, &z);
     }
 
