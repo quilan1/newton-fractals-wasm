@@ -1,46 +1,28 @@
 'use client';
-import { useCallback, useRef } from 'react';
 import styles from './page.module.css';
-import { Canvas, CanvasDrawFn } from './canvas';
+import { Canvas } from './canvas';
 import { useValue } from './valued';
-
-const renderArea = async (ctx: CanvasRenderingContext2D, row: number) => {
-    const newton = await import('@/pkg/newtons_method');
-    newton.render2(ctx, row);
-}
+import { useFractalDraw } from './fractal';
 
 export default function Home() {
-    const frameTime = useValue(0);
-    const doRender = useValue(false);
+    const isRendering = useValue(false);
+    const { drawFn, frameRate, startRender, onDone } = useFractalDraw();
 
-    const data = useRef({ row: 0 });
-
-    const drawFn = useCallback<CanvasDrawFn>(async (context) => {
-        if (context == null) return;
-        if (!doRender.value) return;
-
-        const scale = 1;
-        if (data.current.row > 800) {
-            doRender.value = false;
-            return;
-        }
-
-        const start = Date.now();
-        await renderArea(context, data.current.row);
-        frameTime.value = Date.now() - start;
-
-        data.current.row += scale;
-    }, [doRender, frameTime]);
+    void onDone.then(duration => {
+        console.log('Done:', duration);
+        isRendering.value = false;
+    });
 
     const onClick = () => {
-        doRender.value = true;
-        data.current.row = 0;
+        isRendering.value = true;
+        startRender('z^13 - 3*z^6 + z - 1');
+        // startRender('z^5 + 3z^3 + z + 3');
     }
 
     return (
         <main className={styles.main}>
-            <label>[{doRender.value ? 'Rendering' : 'Not Rendering'}]</label>
-            <label>{frameTime.value} ms</label>
+            <label>[{isRendering.value ? 'Rendering' : 'Not Rendering'}]</label>
+            <label>{frameRate.value}</label>
             <Canvas drawFn={drawFn} className={styles.fractal} width={800} height={800} />
             <button type='button' onClick={onClick}>Render</button>
         </main>

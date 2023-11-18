@@ -1,7 +1,7 @@
 
 import { memo, useEffect, useRef } from "react";
 
-export type CanvasDrawFn = (context: CanvasRenderingContext2D | null) => Promise<void>;
+export type CanvasDrawFn = (context: CanvasRenderingContext2D | null) => void;
 
 export interface CanvasProps extends React.ComponentPropsWithoutRef<"canvas"> {
     drawFn: CanvasDrawFn;
@@ -28,13 +28,11 @@ function useCanvas(drawFn: CanvasDrawFn) {
         const render = () => {
             if (ready.current) {
                 ready.current = false;
-                void (async () => {
-                    try {
-                        await drawFn(context);
-                    } finally {
-                        ready.current = true;
-                    }
-                })();
+                try {
+                    drawFn(context);
+                } finally {
+                    ready.current = true;
+                }
             }
             animationFrameId = window.requestAnimationFrame(render)
         }

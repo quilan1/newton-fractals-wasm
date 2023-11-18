@@ -35,6 +35,9 @@ export class Valued<T> {
 //         : useState(val);
 // }
 
-export function useValue<T>(val: T): Valued<T> {
+export function useValue<T = undefined>(): Valued<T | undefined>;
+export function useValue<T>(val: T): Valued<T>;
+
+export function useValue<T>(val?: T): Valued<T> | Valued<T | undefined> {
     return new Valued(useState(val));
 }

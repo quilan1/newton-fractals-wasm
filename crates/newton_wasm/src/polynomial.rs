@@ -1,0 +1,25 @@
+use wasm_bindgen::prelude::*;
+
+use newton_core::Polynomial as P;
+
+use crate::complex::Complex;
+
+#[wasm_bindgen]
+pub struct Polynomial {
+    pub(crate) poly: P,
+}
+
+#[wasm_bindgen]
+impl Polynomial {
+    #[wasm_bindgen(constructor)]
+    pub fn new(formula: &str) -> Result<Polynomial, JsError> {
+        Ok(Self {
+            poly: P::parse(formula).map_err(|err| JsError::new(&err.to_string()))?,
+        })
+    }
+
+    #[wasm_bindgen]
+    pub fn roots(&self) -> Vec<Complex> {
+        self.poly.roots.iter().cloned().map(From::from).collect()
+    }
+}

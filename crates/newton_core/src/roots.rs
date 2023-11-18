@@ -1,80 +1,131 @@
-use num::complex::Complex64 as Complex;
-use crate::config::Config;
-use crate::raster::Color;
+#![allow(unused_variables, dead_code)]
 
-#[derive(Clone)]
-pub struct Root {
-    pub z: Complex,
-    pub color: Color
+use num_complex::{Complex32, ComplexFloat};
+use rand::Rng;
+
+use crate::{
+    polynomial::{Polynomial, TPolynomial},
+    CPolynomial,
+};
+
+///////////////////////////////////////////////////////////////////
+
+pub fn roots_of<T: TPolynomial>(fz: &Polynomial<T>) -> Vec<Complex32> {
+    let mut roots = durand_kerner_roots(&fz.into());
+    roots.sort_by_cached_key(|z| (100000.0 * z.arg()) as i32);
+    roots
 }
 
-pub struct Roots {
-    roots: Vec<Root>
-}
+fn durand_kerner_roots(fz: &CPolynomial) -> Vec<Complex32> {
+    let mut rng = rand::thread_rng();
 
-impl Roots {
-    pub fn new() -> Self {
-        Roots { roots: Vec::new() }
+    let num_roots = fz.order();
+    let z = Complex32::new(rng.gen::<f32>() * 2.0 - 1.0, rng.gen::<f32>() * 2.0 - 1.0);
+    let z = z / z.norm();
+
+    let one = Complex32::new(1., 0.);
+
+    let mut roots = (0..num_roots).map(|p| z.powi(p as i32)).collect::<Vec<_>>();
+    // log::info!("Initial guess: {z:?}, powers: {roots:?}");
+
+    for attempt in 0..100 {
+        let prev = roots.clone();
+        roots = (0..num_roots)
+            .map(|i| {
+                let numerator = fz.f0(prev[i]);
+                let mut denominator = one;
+                for j in 0..num_roots {
+                    if j == i {
+                        continue;
+                    }
+                    denominator *= prev[i] - prev[j];
+                }
+                prev[i] - numerator / denominator
+            })
+            .collect();
+
+        let values = roots
+            .iter()
+            .cloned()
+            .map(|z| fz.f0(z).norm())
+            .collect::<Vec<_>>();
+        // log::info!("Round {attempt}: {roots:?}");
+        // log::info!("Values: {values:?}");
+
+        if values.iter().cloned().all(|z| z < 0.0000001) {
+            break;
+        }
     }
 
-    pub fn find_root(&mut self, config: &Config, z: &Complex) -> Root {
-        let mut min_root_dist = 0.05;
-        let mut min_root = -1;
+    roots
+}
 
-        // Find the nearest existing root within 0.05 of our final z value.
-        for (i, root) in self.roots.iter().enumerate() {
-            let dist = (root.z - z).norm_sqr();
-            if dist >= min_root_dist { continue; }
+///////////////////////////////////////////////////////////////////
 
-            min_root_dist = dist;
-            min_root = i as i32;
-        }
+fn roots_of_old<T: TPolynomial>(fz: &Polynomial<T>) -> Vec<Complex32> {
+    let mut roots = Vec::new();
 
-        // If we couldn't find an existing root within 0.05 of our z value, make a new one!
-        if min_root < 0 {
-            self.roots.push(Root { z: *z, color: calc_color(config, z) });
-            min_root = self.roots.len() as i32 - 1;
-        }
+    let mut coef = fz
+        .coefficients()
+        .into_iter()
+        .map(Into::into)
+        .collect::<Vec<_>>();
 
-        self.roots[min_root as usize].clone()
+    if coef.len() < 2 {
+        return roots;
+    }
+
+    strip_leading(&mut coef);
+    for _ in 0..coef.len() - 2 {
+        let fz: CPolynomial = coef.clone().into();
+        let r = find_root(&fz);
+        roots.push(r);
+        divide_polynomial(&mut coef, r);
+    }
+    roots.push(coef[0]);
+
+    roots.sort_by_cached_key(|z| (100000.0 * z.arg()) as i32);
+
+    roots
+}
+
+fn strip_leading(coef: &mut [Complex32]) {
+    let leading_coef = coef[coef.len() - 1];
+    for c in coef {
+        *c /= leading_coef;
     }
 }
 
-// Returns (r,g,b) from a hue from 0 to 360.
-// 0 degrees == blue
-// 120 degrees == red
-// 240 degrees == green
-fn calc_color(config: &Config, z: &Complex) -> Color {
-    let mut hue = (z.arg() * 180.0 / std::f64::consts::PI) as i32;
+fn find_root(fz: &CPolynomial) -> Complex32 {
+    let mut rng = rand::thread_rng();
 
-    while hue < 0 { hue += 360; }
+    fn discount_newton(fz: &CPolynomial, mut z: Complex32) -> Option<Complex32> {
+        for _ in 0..100 {
+            let f0 = fz.f0(z);
+            if f0.norm() < 0.0000001 {
+                return Some(z);
+            }
+            z -= f0 / fz.f1(z);
+        }
+        None
+    }
 
-    let (r, g, b);
-    if hue < 120 { g=0; r=hue; b=120-hue; }
-    else if hue < 240 { b=0; g=hue-120; r=240-hue; }
-    else { r=0; b=hue-240; g=360-hue; }
+    for _ in 0..100 {
+        let mut z = Complex32::new(rng.gen::<f32>() * 2.0 - 1.0, rng.gen::<f32>() * 2.0 - 1.0);
+        z = match discount_newton(fz, z) {
+            Some(z) => z,
+            None => continue,
+        };
+        return z;
+    }
 
-    let mut r = r as f64 / 120.0;
-    let mut g = g as f64 / 120.0;
-    let mut b = b as f64 / 120.0;
+    Complex32::new(0., 0.)
+}
 
-    let m = 255.0 / f64::max(f64::max(r, g), b);
-    r *= m; g *= m; b *= m;
-
-    let m = f64::max(f64::max(r, g), b);
-    let s = f64::min(1., z.norm() / config.saturation);
-
-    // println!("New root: s = {}, init rgb = {}, {}, {}", s, r, g, b);
-
-    r = m*(1.-s) + r*s;
-    g = m*(1.-s) + g*s;
-    b = m*(1.-s) + b*s;
-
-    r = f64::min(r, 255.);
-    g = f64::min(g, 255.);
-    b = f64::min(b, 255.);
-
-    let (r, g, b) = (r as u8, g as u8, b as u8);
-
-    Color { r, g, b, a: 0 }
+fn divide_polynomial(coef: &mut Vec<Complex32>, r: Complex32) {
+    for i in (1..coef.len()).rev() {
+        let cur_coef = coef[i];
+        coef[i - 1] += r * cur_coef;
+    }
+    coef.remove(0);
 }
