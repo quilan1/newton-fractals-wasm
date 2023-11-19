@@ -15,3 +15,9 @@ impl From<Complex32> for Complex {
         }
     }
 }
+
+impl From<Complex> for Complex32 {
+    fn from(value: Complex) -> Self {
+        Self::new(value.re, value.im)
+    }
+}

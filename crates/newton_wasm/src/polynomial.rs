@@ -22,4 +22,8 @@ impl Polynomial {
     pub fn roots(&self) -> Vec<Complex> {
         self.poly.roots.iter().cloned().map(From::from).collect()
     }
+
+    pub fn eval(&self, z: Complex) -> Complex {
+        self.poly.f0(z.into()).into()
+    }
 }

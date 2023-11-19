@@ -69,6 +69,10 @@ impl<T: TPolynomial> Polynomial<T> {
         coefs
     }
 
+    pub fn term_of(&self, power: i32) -> Option<&PolynomialTerm<T>> {
+        self.function.iter().find(|term| term.power == power)
+    }
+
     pub fn order(&self) -> usize {
         self.function.iter().map(|t| t.power).max().unwrap() as usize
     }

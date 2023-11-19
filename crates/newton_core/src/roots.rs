@@ -10,42 +10,38 @@ use crate::{
 
 ///////////////////////////////////////////////////////////////////
 
+const PIXEL_DIST: f32 = 3. / 800.;
+
 pub fn roots_of<T: TPolynomial>(fz: &Polynomial<T>) -> Vec<Complex32> {
     let mut roots = Vec::new();
-    let mut fz = fz.clone();
+    let mut fz: CPolynomial = fz.into();
     fz.normalize();
 
     for attempt in 0..10 {
-        roots = match durand_kerner_roots(&(&fz).into()) {
+        roots = match durand_kerner_roots(&fz) {
             Some(r) => r,
             None => continue,
         }
     }
 
+    let mut roots = merge_nearby_roots(roots, 10);
     roots.sort_by_cached_key(|z| (1000.0 * z.arg().abs()) as i32);
-
-    let values = roots
-        .iter()
-        .cloned()
-        .map(|z| fz.f0(z).norm().log10())
-        .map(|v| (100. * v).round() / 100.)
-        .collect::<Vec<_>>();
-    log::info!("Values: {values:?}");
     roots
 }
 
+// Because using 1.0 can occasionally diverge, I've taken an approach like neural networks,
+// of applying a factor that moves it in the right direction, but tries not to overshoot
+const WDK_DAMPING_FACTOR: f32 = 0.1;
+
 fn durand_kerner_roots(fz: &CPolynomial) -> Option<Vec<Complex32>> {
     let num_roots = fz.order();
-
     let mut roots = random_roots(num_roots);
-    let alpha = 0.1;
-
-    for iteration in 0..100 {
+    for iteration in 0..1000 {
         let prev = roots.clone();
         roots = (0..num_roots)
             .map(|i| {
                 let w = wdk_correction_term(fz, &prev, num_roots, i);
-                prev[i] - alpha * w
+                prev[i] - WDK_DAMPING_FACTOR * w
             })
             .collect();
 
@@ -82,6 +78,24 @@ fn random_roots(num_roots: usize) -> Vec<Complex32> {
     let mut rng = rand::thread_rng();
     let z = Complex32::from_polar(1., rng.gen::<f32>() * 360.);
     (0..num_roots).map(|p| z.powi(p as i32)).collect()
+}
+
+fn merge_nearby_roots(roots: Vec<Complex32>, within_n_pixels: usize) -> Vec<Complex32> {
+    let pixel_threshold = within_n_pixels as f32 * PIXEL_DIST;
+
+    // Merge roots that are within a certain distance of one-another
+    // TODO: Use Disjoint-Union Merge operation here instead
+    let mut new_roots: Vec<Complex32> = Vec::new();
+    for root in roots {
+        if new_roots
+            .iter()
+            .all(|&z| (root - z).norm() > pixel_threshold)
+        {
+            new_roots.push(root);
+        }
+    }
+
+    new_roots
 }
 
 ///////////////////////////////////////////////////////////////////
