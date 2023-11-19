@@ -16,8 +16,15 @@ const resetData = { row: 0, scale: 32 };
 const defaultData: Data = { isRendering: false, startTime: 0, ...resetData };
 
 const renderFn = (context: CanvasRenderingContext2D, newton: Newton, data: MutableRefObject<Data>) => {
+    if (!data.current.fz) {
+        console.log('No function, for some reason, aborting');
+        data.current.isRendering = false;
+        return;
+    }
+
     if (data.current.row >= context.canvas.height) {
         if (data.current.scale == 1) {
+            // _drawRoots(context, data.current.fz);
             data.current.isRendering = false;
             return;
         }
@@ -28,13 +35,11 @@ const renderFn = (context: CanvasRenderingContext2D, newton: Newton, data: Mutab
     const start = Date.now();
     let numFrames = 0;
     while (numFrames == 0 || (Date.now() - start < 15 && data.current.row < context.canvas.height)) {
-        if (!data.current.fz) {
-            data.current.fz = new newton.Polynomial('z - 1');
-        }
         newton.render(context, data.current.row, data.current.scale, data.current.fz);
         data.current.row += data.current.scale;
         numFrames += 1;
     }
+
     const frameRate = (Date.now() - start) / numFrames;
     return { frameRate, numFrames };
 }
@@ -48,7 +53,7 @@ export const useFractalDraw = () => {
         if (newton.current) {
             data.current.fz = new newton.current.Polynomial(fz);
             const roots = data.current.fz.roots();
-            console.log('Coefficients:', roots.map(c => ({ re: c.re.toFixed(2), im: c.im.toFixed(2) })));
+            console.log('Roots:', roots.map(c => ({ re: c.re.toFixed(8), im: c.im.toFixed(8) })));
         }
     };
 
@@ -72,4 +77,22 @@ export const useFractalDraw = () => {
     }, [setDone, frameRateStr]);
 
     return { drawFn, frameRate: frameRateStr, startRender, onDone };
+}
+
+const _drawRoots = (context: CanvasRenderingContext2D, fz: Polynomial) => {
+    for (const root of fz.roots()) {
+        const x = 400 * (1 + root.re / 1.5);
+        const y = 400 * (1 + root.im / 1.5);
+        context.strokeStyle = 'black';
+        context.beginPath();
+        context.arc(x, y, 19, 0, 2 * Math.PI);
+        context.stroke();
+        context.beginPath();
+        context.arc(x, y, 21, 0, 2 * Math.PI);
+        context.stroke();
+        context.strokeStyle = 'white';
+        context.beginPath();
+        context.arc(x, y, 20, 0, 2 * Math.PI);
+        context.stroke();
+    }
 }
