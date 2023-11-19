@@ -1,5 +1,5 @@
 use anyhow::Result;
-use num_complex::Complex32;
+use num_complex::{Complex32, ComplexFloat};
 use regex::Regex;
 
 use crate::{polynomial_term::PolynomialTerm, roots::roots_of};
@@ -8,11 +8,12 @@ use crate::{polynomial_term::PolynomialTerm, roots::roots_of};
 
 pub trait TPolynomial:
     Copy
-    + std::ops::Mul<Complex32, Output = Complex32>
     + Into<Complex32>
     + From<f32>
     + PartialEq
+    + std::ops::Mul<Complex32, Output = Complex32>
     + std::ops::Mul<f32, Output = Self>
+    + std::ops::DivAssign
     + std::fmt::Debug
 {
 }
@@ -26,7 +27,7 @@ impl Parseable for f32 {}
 ///////////////////////////////////////////////////////////////////
 
 /// Polynomial terms and their derivatives
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Polynomial<T> {
     function: Vec<PolynomialTerm<T>>,
     derivative: Vec<PolynomialTerm<T>>,
@@ -70,6 +71,24 @@ impl<T: TPolynomial> Polynomial<T> {
 
     pub fn order(&self) -> usize {
         self.function.iter().map(|t| t.power).max().unwrap() as usize
+    }
+
+    // Turns poly from a*z^n + b*z^[n-k] + ... into z^n + (b/a)*z^[n-k] + ...
+    pub fn normalize(&mut self) {
+        let coef = self
+            .function
+            .iter()
+            .max_by_key(|t| t.power)
+            .unwrap()
+            .coefficient;
+
+        for t in &mut self.function {
+            t.coefficient /= coef;
+        }
+
+        for t in &mut self.derivative {
+            t.coefficient /= coef;
+        }
     }
 }
 

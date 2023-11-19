@@ -11,53 +11,77 @@ use crate::{
 ///////////////////////////////////////////////////////////////////
 
 pub fn roots_of<T: TPolynomial>(fz: &Polynomial<T>) -> Vec<Complex32> {
-    let mut roots = durand_kerner_roots(&fz.into());
-    roots.sort_by_cached_key(|z| (100000.0 * z.arg()) as i32);
-    roots
-}
+    let mut roots = Vec::new();
+    let mut fz = fz.clone();
+    fz.normalize();
 
-fn durand_kerner_roots(fz: &CPolynomial) -> Vec<Complex32> {
-    let mut rng = rand::thread_rng();
-
-    let num_roots = fz.order();
-    let z = Complex32::new(rng.gen::<f32>() * 2.0 - 1.0, rng.gen::<f32>() * 2.0 - 1.0);
-    let z = z / z.norm();
-
-    let one = Complex32::new(1., 0.);
-
-    let mut roots = (0..num_roots).map(|p| z.powi(p as i32)).collect::<Vec<_>>();
-    // log::info!("Initial guess: {z:?}, powers: {roots:?}");
-
-    for attempt in 0..100 {
-        let prev = roots.clone();
-        roots = (0..num_roots)
-            .map(|i| {
-                let numerator = fz.f0(prev[i]);
-                let mut denominator = one;
-                for j in 0..num_roots {
-                    if j == i {
-                        continue;
-                    }
-                    denominator *= prev[i] - prev[j];
-                }
-                prev[i] - numerator / denominator
-            })
-            .collect();
-
-        let values = roots
-            .iter()
-            .cloned()
-            .map(|z| fz.f0(z).norm())
-            .collect::<Vec<_>>();
-        // log::info!("Round {attempt}: {roots:?}");
-        // log::info!("Values: {values:?}");
-
-        if values.iter().cloned().all(|z| z < 0.0000001) {
-            break;
+    for attempt in 0..10 {
+        roots = match durand_kerner_roots(&(&fz).into()) {
+            Some(r) => r,
+            None => continue,
         }
     }
 
+    roots.sort_by_cached_key(|z| (1000.0 * z.arg().abs()) as i32);
+
+    let values = roots
+        .iter()
+        .cloned()
+        .map(|z| fz.f0(z).norm().log10())
+        .map(|v| (100. * v).round() / 100.)
+        .collect::<Vec<_>>();
+    log::info!("Values: {values:?}");
     roots
+}
+
+fn durand_kerner_roots(fz: &CPolynomial) -> Option<Vec<Complex32>> {
+    let num_roots = fz.order();
+
+    let mut roots = random_roots(num_roots);
+    let alpha = 0.1;
+
+    for iteration in 0..100 {
+        let prev = roots.clone();
+        roots = (0..num_roots)
+            .map(|i| {
+                let w = wdk_correction_term(fz, &prev, num_roots, i);
+                prev[i] - alpha * w
+            })
+            .collect();
+
+        if roots.iter().any(|z| z.is_nan()) {
+            return None;
+        }
+    }
+
+    Some(roots)
+}
+
+fn wdk_correction_term(
+    fz: &CPolynomial,
+    roots: &[Complex32],
+    num_roots: usize,
+    i: usize,
+) -> Complex32 {
+    let numerator = fz.f0(roots[i]);
+    let denominator = match (0..num_roots)
+        .filter(|&j| i != j)
+        .map(|j| roots[i] - roots[j])
+        .reduce(|res, b| res * b)
+    {
+        Some(z) => z,
+        None => {
+            log::info!("Couldn't reduce? r={roots:?}, i={i}");
+            Complex32::new(1., 0.)
+        }
+    };
+    numerator / denominator
+}
+
+fn random_roots(num_roots: usize) -> Vec<Complex32> {
+    let mut rng = rand::thread_rng();
+    let z = Complex32::from_polar(1., rng.gen::<f32>() * 360.);
+    (0..num_roots).map(|p| z.powi(p as i32)).collect()
 }
 
 ///////////////////////////////////////////////////////////////////

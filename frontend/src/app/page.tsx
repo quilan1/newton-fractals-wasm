@@ -15,8 +15,11 @@ export default function Home() {
 
     const onClick = () => {
         isRendering.value = true;
+        const start = performance.now();
         startRender('z^13 - 3*z^6 + z - 1');
         // startRender('z^5 + 3z^3 + z + 3');
+        // startRender('2z^11 - 2z^7 + 4z^6 + 4z^5 - 4z^4 - 3z - 2');
+        console.log('Roots found in:', performance.now() - start);
     }
 
     return (

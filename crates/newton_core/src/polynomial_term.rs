@@ -6,7 +6,7 @@ use crate::polynomial::{Parseable, TPolynomial};
 ///////////////////////////////////////////////////////////////////
 
 /// A single polynomial term of C*z^p
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct PolynomialTerm<T> {
     pub coefficient: T,
     pub power: i32,

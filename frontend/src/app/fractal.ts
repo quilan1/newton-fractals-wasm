@@ -28,7 +28,10 @@ const renderFn = (context: CanvasRenderingContext2D, newton: Newton, data: Mutab
     const start = Date.now();
     let numFrames = 0;
     while (numFrames == 0 || (Date.now() - start < 15 && data.current.row < context.canvas.height)) {
-        newton.render(context, data.current.row, data.current.scale, data.current.fz ?? new newton.Polynomial('z - 1'));
+        if (!data.current.fz) {
+            data.current.fz = new newton.Polynomial('z - 1');
+        }
+        newton.render(context, data.current.row, data.current.scale, data.current.fz);
         data.current.row += data.current.scale;
         numFrames += 1;
     }
