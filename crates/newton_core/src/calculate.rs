@@ -1,43 +1,28 @@
 use num_complex::Complex32;
 
 use crate::{
-    colors::write_pixel,
-    pixel_data::PixelData16,
+    pixel_data::PixelData,
     polynomial::{Polynomial, TPolynomial},
-    COMPLEX_WINDOW, LOG_EPSILON, MAX_NEWTON_COUNT,
+    CANVAS_SIZE, COMPLEX_WINDOW, LOG_EPSILON, MAX_NEWTON_COUNT,
 };
 
-type PixelData = PixelData16;
+///////////////////////////////////////////////////////////////////
 
-pub fn calculate_row<T: TPolynomial>(
-    fz: &Polynomial<T>,
-    row: u32,
-    width: u32,
-    height: u32,
-    pixel_data: &mut [u8],
-) {
-    let z_im = (row as f32 / height as f32).lerp(-COMPLEX_WINDOW, COMPLEX_WINDOW);
-    let delta_re = 2.0 * COMPLEX_WINDOW / width as f32;
+pub fn calculate_row<T: TPolynomial>(fz: &Polynomial<T>, row: usize, pixel_data: &mut [PixelData]) {
+    let z_im = (row as f32 / CANVAS_SIZE as f32).lerp(-COMPLEX_WINDOW, COMPLEX_WINDOW);
+    let delta_re = 2.0 * COMPLEX_WINDOW / pixel_data.len() as f32;
     let mut z_re = -COMPLEX_WINDOW;
 
-    pixel_data.chunks_mut(4).for_each(|pixel| {
-        calculate_pixel(fz, z_re, z_im, pixel);
+    pixel_data.iter_mut().for_each(|pixel| {
+        *pixel = calculate_pixel(fz, Complex32::new(z_re, z_im));
         z_re += delta_re;
     });
 }
 
-fn calculate_pixel<T: TPolynomial>(fz: &Polynomial<T>, z_re: f32, z_im: f32, pixel: &mut [u8]) {
-    let (z, frac) = newtons_method(fz, Complex32::new(z_re, z_im));
+fn calculate_pixel<T: TPolynomial>(fz: &Polynomial<T>, z: Complex32) -> PixelData {
+    let (z, frac) = newtons_method(fz, z);
     let root_index = nearest_root(z, &fz.roots);
-    let pixel_data: PixelData = (root_index, frac).into();
-    write_pixel(pixel, pixel_data, &fz.roots);
-}
-
-fn nearest_root(z: Complex32, roots: &[Complex32]) -> usize {
-    let dist = |i: usize| (z - roots[i]).norm_sqr();
-    (0..roots.len())
-        .min_by_key(|&i| (100000. * dist(i)) as u32)
-        .unwrap()
+    (root_index, frac).into()
 }
 
 // Calls Newton's method: z := z - f(z) / f'(z)
@@ -57,6 +42,15 @@ pub fn newtons_method<T: TPolynomial>(fz: &Polynomial<T>, mut z: Complex32) -> (
     }
 
     (z, count / MAX_NEWTON_COUNT)
+}
+
+///////////////////////////////////////////////////////////////////
+
+fn nearest_root(z: Complex32, roots: &[Complex32]) -> usize {
+    let dist = |i: usize| (z - roots[i]).norm_sqr();
+    (0..roots.len())
+        .min_by_key(|&i| (100000. * dist(i)) as u32)
+        .unwrap()
 }
 
 trait Lerp {

@@ -15,6 +15,14 @@ interface Data {
 const resetData = { row: 0, scale: 32 };
 const defaultData: Data = { isRendering: false, startTime: 0, ...resetData };
 
+const renderToCanvas = (context: CanvasRenderingContext2D, newton: Newton, data: Data) => {
+    const { row, scale, fz: _fz } = data;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const fz = _fz!;
+    const row_data = newton.calculate(fz, scale, row);
+    newton.render(context, fz, scale, row, row_data);
+}
+
 const renderFn = (context: CanvasRenderingContext2D, newton: Newton, data: MutableRefObject<Data>) => {
     if (!data.current.fz) {
         console.log('No function, for some reason, aborting');
@@ -24,7 +32,7 @@ const renderFn = (context: CanvasRenderingContext2D, newton: Newton, data: Mutab
 
     if (data.current.row >= context.canvas.height) {
         if (data.current.scale == 1) {
-            // _drawRoots(context, data.current.fz);
+            _drawRoots(context, data.current.fz);
             data.current.isRendering = false;
             return;
         }
@@ -35,7 +43,7 @@ const renderFn = (context: CanvasRenderingContext2D, newton: Newton, data: Mutab
     const start = Date.now();
     let numFrames = 0;
     while (numFrames == 0 || (Date.now() - start < 15 && data.current.row < context.canvas.height)) {
-        newton.render(context, data.current.row, data.current.scale, data.current.fz);
+        renderToCanvas(context, newton, data.current);
         data.current.row += data.current.scale;
         numFrames += 1;
     }
@@ -83,13 +91,16 @@ const _drawRoots = (context: CanvasRenderingContext2D, fz: Polynomial) => {
     for (const root of fz.roots()) {
         const x = 400 * (1 + root.re / 1.5);
         const y = 400 * (1 + root.im / 1.5);
+
         context.strokeStyle = 'black';
         context.beginPath();
         context.arc(x, y, 19, 0, 2 * Math.PI);
         context.stroke();
+
         context.beginPath();
         context.arc(x, y, 21, 0, 2 * Math.PI);
         context.stroke();
+
         context.strokeStyle = 'white';
         context.beginPath();
         context.arc(x, y, 20, 0, 2 * Math.PI);

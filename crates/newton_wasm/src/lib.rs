@@ -18,6 +18,6 @@ pub fn complex_window() -> f32 {
 }
 
 #[wasm_bindgen]
-pub fn canvas_size() -> u32 {
+pub fn canvas_size() -> usize {
     CANVAS_SIZE
 }

@@ -5,12 +5,10 @@ use rand::Rng;
 
 use crate::{
     polynomial::{Polynomial, TPolynomial},
-    CPolynomial, CANVAS_SIZE,
+    CPolynomial, DISTANCE_PER_PIXEL, SEPARATE_ROOTS_PIXEL_DISTANCE,
 };
 
 ///////////////////////////////////////////////////////////////////
-
-const PIXEL_DIST: f32 = 3. / CANVAS_SIZE as f32;
 
 pub fn roots_of<T: TPolynomial>(fz: &Polynomial<T>) -> Vec<Complex32> {
     let mut roots = Vec::new();
@@ -24,7 +22,7 @@ pub fn roots_of<T: TPolynomial>(fz: &Polynomial<T>) -> Vec<Complex32> {
         }
     }
 
-    let mut roots = merge_nearby_roots(roots, 10);
+    let mut roots = merge_nearby_roots(roots);
     roots.sort_by_cached_key(|z| (1000.0 * z.arg().abs()) as i32);
     roots
 }
@@ -74,8 +72,8 @@ fn random_roots(num_roots: usize) -> Vec<Complex32> {
     (0..num_roots).map(|p| z.powi(p as i32)).collect()
 }
 
-fn merge_nearby_roots(roots: Vec<Complex32>, within_n_pixels: usize) -> Vec<Complex32> {
-    let pixel_threshold = within_n_pixels as f32 * PIXEL_DIST;
+fn merge_nearby_roots(roots: Vec<Complex32>) -> Vec<Complex32> {
+    let pixel_threshold = SEPARATE_ROOTS_PIXEL_DISTANCE * DISTANCE_PER_PIXEL;
 
     // Merge roots that are within a certain distance of one-another
     // TODO: Use Disjoint-Union Merge operation here instead
@@ -91,73 +89,3 @@ fn merge_nearby_roots(roots: Vec<Complex32>, within_n_pixels: usize) -> Vec<Comp
 
     new_roots
 }
-
-///////////////////////////////////////////////////////////////////
-
-// fn roots_of_old<T: TPolynomial>(fz: &Polynomial<T>) -> Vec<Complex32> {
-//     let mut roots = Vec::new();
-
-//     let mut coef = fz
-//         .coefficients()
-//         .into_iter()
-//         .map(Into::into)
-//         .collect::<Vec<_>>();
-
-//     if coef.len() < 2 {
-//         return roots;
-//     }
-
-//     strip_leading(&mut coef);
-//     for _ in 0..coef.len() - 2 {
-//         let fz: CPolynomial = coef.clone().into();
-//         let r = find_root(&fz);
-//         roots.push(r);
-//         divide_polynomial(&mut coef, r);
-//     }
-//     roots.push(coef[0]);
-
-//     roots.sort_by_cached_key(|z| (100000.0 * z.arg()) as i32);
-
-//     roots
-// }
-
-// fn strip_leading(coef: &mut [Complex32]) {
-//     let leading_coef = coef[coef.len() - 1];
-//     for c in coef {
-//         *c /= leading_coef;
-//     }
-// }
-
-// fn find_root(fz: &CPolynomial) -> Complex32 {
-//     let mut rng = rand::thread_rng();
-
-//     fn discount_newton(fz: &CPolynomial, mut z: Complex32) -> Option<Complex32> {
-//         for _ in 0..100 {
-//             let f0 = fz.f0(z);
-//             if f0.norm() < 0.0000001 {
-//                 return Some(z);
-//             }
-//             z -= f0 / fz.f1(z);
-//         }
-//         None
-//     }
-
-//     for _ in 0..100 {
-//         let mut z = Complex32::new(rng.gen::<f32>() * 2.0 - 1.0, rng.gen::<f32>() * 2.0 - 1.0);
-//         z = match discount_newton(fz, z) {
-//             Some(z) => z,
-//             None => continue,
-//         };
-//         return z;
-//     }
-
-//     Complex32::new(0., 0.)
-// }
-
-// fn divide_polynomial(coef: &mut Vec<Complex32>, r: Complex32) {
-//     for i in (1..coef.len()).rev() {
-//         let cur_coef = coef[i];
-//         coef[i - 1] += r * cur_coef;
-//     }
-//     coef.remove(0);
-// }

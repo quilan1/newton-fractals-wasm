@@ -2,7 +2,7 @@ use num_complex::Complex32;
 
 use crate::pixel_data::PixelDataDetail;
 
-pub fn write_pixel<P: Into<PixelDataDetail>>(pixel: &mut [u8], pixel_data: P, roots: &[Complex32]) {
+pub fn pixel_color<P: Into<PixelDataDetail>>(pixel_data: P, roots: &[Complex32]) -> [u8; 4] {
     let PixelDataDetail { root_index, frac } = pixel_data.into();
 
     // Turn the complex value to a hue
@@ -11,8 +11,7 @@ pub fn write_pixel<P: Into<PixelDataDetail>>(pixel: &mut [u8], pixel_data: P, ro
     let v = 1. - frac.sqrt(); // lower counts yield brighter colors
 
     // Transform the HSV to RGBA
-    let rgba = hsv_to_rgba(h, 1., v);
-    pixel.copy_from_slice(&rgba[..]);
+    hsv_to_rgba(h, 1., v)
 }
 
 /// Transforms a hue, saturation and value color to RGBA

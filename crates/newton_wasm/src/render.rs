@@ -1,92 +1,82 @@
-use newton_core::calculate_row;
+use newton_core::{calculate_row, pixel_color, PixelData, CANVAS_SIZE};
+use num_complex::Complex32;
 use wasm_bindgen::prelude::*;
 
-use crate::polynomial;
+use crate::polynomial::Polynomial;
+
+#[wasm_bindgen]
+pub struct PixelDataRow(Vec<PixelData>);
+
+#[wasm_bindgen]
+pub fn calculate(fz: &Polynomial, render_scale: usize, row: usize) -> PixelDataRow {
+    let pixel_count = CANVAS_SIZE / render_scale;
+    let mut pixel_data = vec![PixelData(0); pixel_count];
+    calculate_row(&fz.poly, row, &mut pixel_data);
+    PixelDataRow(pixel_data)
+}
 
 #[wasm_bindgen]
 pub fn render(
     ctx: &web_sys::CanvasRenderingContext2d,
-    row: u32,
-    render_scale: u32,
-    fz: &polynomial::Polynomial,
+    fz: &Polynomial,
+    render_scale: usize,
+    row: usize,
+    pixel_data_row: &PixelDataRow,
 ) -> Result<(), JsValue> {
-    let canvas = ctx.canvas().unwrap_throw();
-    let (width, height) = (canvas.width(), canvas.height());
+    let num_pixels_chunk = render_scale;
+    let num_pixels_row = CANVAS_SIZE;
+    let num_pixels_block = num_pixels_row * num_pixels_chunk;
 
-    let mut rendered_pixels = vec![0; 4 * (width / render_scale) as usize];
-    calculate_row(
-        &fz.poly,
-        row,
-        width / render_scale,
-        height,
-        &mut rendered_pixels,
+    let mut canvas_block_bytes = vec![0; 4 * num_pixels_block];
+    write_block(
+        &fz.poly.roots,
+        &pixel_data_row.0,
+        &mut canvas_block_bytes,
+        4 * num_pixels_row,
+        4 * num_pixels_chunk,
     );
 
-    let scaled_pixels = scale_row_by(&rendered_pixels, width, render_scale);
-    let data = web_sys::ImageData::new_with_u8_clamped_array(
-        wasm_bindgen::Clamped(&scaled_pixels),
-        width,
+    let image_data = web_sys::ImageData::new_with_u8_clamped_array(
+        wasm_bindgen::Clamped(&canvas_block_bytes),
+        CANVAS_SIZE as u32,
     )?;
-    ctx.put_image_data(&data, 0.0, row as f64)?;
-
+    ctx.put_image_data(&image_data, 0.0, row as f64)?;
     Ok(())
 }
 
-fn scale_row_by(rendered_pixels: &[u8], width: u32, render_scale: u32) -> Vec<u8> {
-    let num_bytes_block = 4 * width as usize;
-    let num_bytes_group = 4 * render_scale as usize;
-
-    let mut scaled_pixels = vec![0; 4 * (width * render_scale) as usize];
-
-    // scaled_pixels
-    //     .chunks_mut(num_bytes_block)
-    //     .for_each(|scaled_row| {
-    //         scaled_row
-    //             .chunks_mut(num_bytes_group)
-    //             .zip(rendered_pixels.chunks(num_bytes_pixel))
-    //             .for_each(|(scaled_pixels, rendered_pixel)| {
-    //                 scaled_pixels
-    //                     .chunks_mut(num_bytes_pixel)
-    //                     .for_each(|scaled_pixel| {
-    //                         scaled_pixel.copy_from_slice(rendered_pixel);
-    //                     });
-    //             });
-    //     });
-
-    scale_block(
-        &mut scaled_pixels,
-        rendered_pixels,
-        num_bytes_block,
-        num_bytes_group,
-    );
-
-    scaled_pixels
-}
-
-fn scale_block(
-    scaled_pixels: &mut [u8],
-    rendered_pixels: &[u8],
-    num_bytes_block: usize,
-    num_bytes_group: usize,
+fn write_block(
+    roots: &[Complex32],
+    pixel_data: &[PixelData],
+    canvas_block_bytes: &mut [u8],
+    num_bytes_row: usize,
+    num_bytes_chunk: usize,
 ) {
-    scaled_pixels
-        .chunks_mut(num_bytes_block)
-        .for_each(|scaled_row| {
-            scale_row(scaled_row, rendered_pixels, num_bytes_group);
+    canvas_block_bytes
+        .chunks_mut(num_bytes_row)
+        .for_each(|canvas_row_bytes| {
+            write_row(roots, pixel_data, canvas_row_bytes, num_bytes_chunk);
         });
 }
 
-fn scale_row(scaled_row: &mut [u8], rendered_pixels: &[u8], num_bytes_group: usize) {
-    scaled_row
-        .chunks_mut(num_bytes_group)
-        .zip(rendered_pixels.chunks(4))
-        .for_each(|(scaled_pixels, rendered_pixel)| {
-            scale_pixels(scaled_pixels, rendered_pixel);
+fn write_row(
+    roots: &[Complex32],
+    pixel_data: &[PixelData],
+    canvas_row_bytes: &mut [u8],
+    num_bytes_chunk: usize,
+) {
+    canvas_row_bytes
+        .chunks_mut(num_bytes_chunk)
+        .zip(pixel_data)
+        .for_each(|(canvas_chunk_bytes, &pixel_data)| {
+            let pixel_bytes = pixel_color(pixel_data, roots);
+            write_chunk(canvas_chunk_bytes, &pixel_bytes);
         });
 }
 
-fn scale_pixels(scaled_pixels: &mut [u8], rendered_pixel: &[u8]) {
-    scaled_pixels.chunks_mut(4).for_each(|scaled_pixel| {
-        scaled_pixel.copy_from_slice(rendered_pixel);
-    });
+fn write_chunk(canvas_chunk_bytes: &mut [u8], pixel_bytes: &[u8]) {
+    canvas_chunk_bytes
+        .chunks_mut(4)
+        .for_each(|canvas_pixel_bytes| {
+            canvas_pixel_bytes.copy_from_slice(pixel_bytes);
+        });
 }
