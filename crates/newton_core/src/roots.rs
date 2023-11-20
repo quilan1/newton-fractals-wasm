@@ -4,11 +4,43 @@ use num_complex::{Complex32, ComplexFloat};
 use rand::Rng;
 
 use crate::{
-    polynomial::{Polynomial, TPolynomial},
-    CPolynomial, DISTANCE_PER_PIXEL, SEPARATE_ROOTS_PIXEL_DISTANCE,
+    polynomial::{CPolynomial, Polynomial, TPolynomial},
+    Lerp, DISTANCE_PER_PIXEL, SEPARATE_ROOTS_PIXEL_DISTANCE,
 };
 
 ///////////////////////////////////////////////////////////////////
+
+pub struct OkLchColor {
+    pub h: f32,
+    pub c: f32,
+}
+
+pub struct Roots {
+    pub roots: Vec<Complex32>,
+    pub colors: Vec<OkLchColor>,
+}
+
+///////////////////////////////////////////////////////////////////
+
+impl Roots {
+    pub fn new<T: TPolynomial>(fz: &Polynomial<T>) -> Option<Self> {
+        let roots = roots_of(fz);
+        if roots.is_empty() {
+            return None;
+        }
+
+        let colors = roots
+            .iter()
+            .map(|z| {
+                let h = z.arg().to_degrees();
+                let c = (z.norm() / 1.5).lerp_clamped(0.01, 0.3);
+                OkLchColor { h, c }
+            })
+            .collect();
+
+        Some(Self { roots, colors })
+    }
+}
 
 pub fn roots_of<T: TPolynomial>(fz: &Polynomial<T>) -> Vec<Complex32> {
     let mut roots = Vec::new();

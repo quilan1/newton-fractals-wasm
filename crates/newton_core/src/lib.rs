@@ -1,5 +1,6 @@
 mod calculate;
 mod colors;
+mod lerp;
 mod pixel_data;
 mod polynomial;
 mod polynomial_term;
@@ -7,12 +8,12 @@ mod roots;
 
 ///////////////////////////////////////////////////////////////////
 
-use polynomial::CPolynomial;
-
 pub use calculate::calculate_row;
 pub use colors::pixel_color;
+pub use lerp::{ilerp, Lerp};
 pub use pixel_data::PixelData;
 pub use polynomial::FPolynomial as Polynomial;
+pub use roots::{OkLchColor, Roots};
 
 ///////////////////////////////////////////////////////////////////
 

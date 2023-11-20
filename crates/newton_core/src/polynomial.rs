@@ -2,7 +2,7 @@ use anyhow::Result;
 use num_complex::{Complex32, ComplexFloat};
 use regex::Regex;
 
-use crate::{polynomial_term::PolynomialTerm, roots::roots_of};
+use crate::polynomial_term::PolynomialTerm;
 
 ///////////////////////////////////////////////////
 
@@ -31,7 +31,6 @@ impl Parseable for f32 {}
 pub struct Polynomial<T> {
     function: Vec<PolynomialTerm<T>>,
     derivative: Vec<PolynomialTerm<T>>,
-    pub roots: Vec<Complex32>,
 }
 
 pub type FPolynomial = Polynomial<f32>;
@@ -115,15 +114,9 @@ impl<T: TPolynomial + Parseable> Polynomial<T> {
             function.push(cp);
         }
 
-        let fz = Self {
+        Ok(Self {
             function,
             derivative,
-            roots: Vec::new(),
-        };
-
-        Ok(Self {
-            roots: roots_of(&fz),
-            ..fz
         })
     }
 }
@@ -159,7 +152,6 @@ impl<T: TPolynomial> From<Vec<(T, i32)>> for Polynomial<T> {
         Self {
             function,
             derivative,
-            roots: Vec::new(),
         }
     }
 }
@@ -179,7 +171,6 @@ impl<T: TPolynomial> From<&Polynomial<T>> for CPolynomial {
                 .iter()
                 .map(|term| PolynomialTerm::new(term.coefficient.into(), term.power))
                 .collect(),
-            roots: fz.roots.clone(),
         }
     }
 }

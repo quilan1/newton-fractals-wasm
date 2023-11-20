@@ -1,24 +1,23 @@
-use newton_core::{calculate_row, pixel_color, PixelData, CANVAS_SIZE};
-use num_complex::Complex32;
+use newton_core::{calculate_row, pixel_color, OkLchColor, PixelData, CANVAS_SIZE};
 use wasm_bindgen::prelude::*;
 
-use crate::polynomial::Polynomial;
+use crate::{polynomial::Polynomial, roots::Roots};
 
 #[wasm_bindgen]
 pub struct PixelDataRow(Vec<PixelData>);
 
 #[wasm_bindgen]
-pub fn calculate(fz: &Polynomial, render_scale: usize, row: usize) -> PixelDataRow {
+pub fn calculate(fz: &Polynomial, roots: &Roots, render_scale: usize, row: usize) -> PixelDataRow {
     let pixel_count = CANVAS_SIZE / render_scale;
     let mut pixel_data = vec![PixelData(0); pixel_count];
-    calculate_row(&fz.poly, row, &mut pixel_data);
+    calculate_row(&fz.poly, &roots.0.roots, row, &mut pixel_data);
     PixelDataRow(pixel_data)
 }
 
 #[wasm_bindgen]
 pub fn render(
     ctx: &web_sys::CanvasRenderingContext2d,
-    fz: &Polynomial,
+    roots: &Roots,
     render_scale: usize,
     row: usize,
     pixel_data_row: &PixelDataRow,
@@ -29,7 +28,7 @@ pub fn render(
 
     let mut canvas_block_bytes = vec![0; 4 * num_pixels_block];
     write_block(
-        &fz.poly.roots,
+        &roots.0.colors,
         &pixel_data_row.0,
         &mut canvas_block_bytes,
         4 * num_pixels_row,
@@ -45,7 +44,7 @@ pub fn render(
 }
 
 fn write_block(
-    roots: &[Complex32],
+    roots: &[OkLchColor],
     pixel_data: &[PixelData],
     canvas_block_bytes: &mut [u8],
     num_bytes_row: usize,
@@ -59,7 +58,7 @@ fn write_block(
 }
 
 fn write_row(
-    roots: &[Complex32],
+    roots: &[OkLchColor],
     pixel_data: &[PixelData],
     canvas_row_bytes: &mut [u8],
     num_bytes_chunk: usize,

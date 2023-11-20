@@ -1,6 +1,7 @@
 mod complex;
 mod polynomial;
 mod render;
+mod roots;
 
 use newton_core::{CANVAS_SIZE, COMPLEX_WINDOW};
 use wasm_bindgen::prelude::*;

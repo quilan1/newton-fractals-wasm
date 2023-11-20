@@ -8,5 +8,6 @@ anyhow = "1.0.75"
 getrandom = { version = "0.2.11", features = ["js"] }
 log = "0.4.20"
 num-complex = "0.4.4"
+palette = "0.7.3"
 rand = "0.8.5"
 regex = "1.10.2"

@@ -42,7 +42,7 @@ const renderFn = (context: CanvasRenderingContext2D, data: Data) => {
 
     if (data.renderData.row >= context.canvas.height) {
         if (data.renderData.scale == 1) {
-            postDraw(context, data.fractalData.fz);
+            postDraw(context, data.fractalData);
             data.renderData.isRendering = false;
             return;
         }

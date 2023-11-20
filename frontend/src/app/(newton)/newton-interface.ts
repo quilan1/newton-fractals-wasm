@@ -2,7 +2,7 @@
 export type Newton = typeof import('@/pkg/newton_wasm');
 export let newton: Newton | null = null;
 
-import { Polynomial, PixelDataRow } from '@/pkg/newton_wasm';
+import { Polynomial, PixelDataRow, Roots } from '@/pkg/newton_wasm';
 
 export const getNewtonSync = (): Newton | null => {
     if (!newton) { void getNewtonAsync(); }
@@ -25,12 +25,17 @@ export const newPolynomial = (formula: string): Polynomial => {
     return new newton!.Polynomial(formula);
 }
 
-export const calculate = (fz: Polynomial, renderScale: number, row: number): PixelDataRow => {
+export const newRoots = (fz: Polynomial): Roots => {
     assertNewton(newton);
-    return newton!.calculate(fz, renderScale, row);
+    return new newton!.Roots(fz);
 }
 
-export const render = (context: CanvasRenderingContext2D, fz: Polynomial, renderScale: number, row: number, pixelDataRow: PixelDataRow) => {
+export const calculate = (fz: Polynomial, roots: Roots, renderScale: number, row: number): PixelDataRow => {
     assertNewton(newton);
-    newton!.render(context, fz, renderScale, row, pixelDataRow);
+    return newton!.calculate(fz, roots, renderScale, row);
+}
+
+export const render = (context: CanvasRenderingContext2D, roots: Roots, renderScale: number, row: number, pixelDataRow: PixelDataRow) => {
+    assertNewton(newton);
+    newton!.render(context, roots, renderScale, row, pixelDataRow);
 }
