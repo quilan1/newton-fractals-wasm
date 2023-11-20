@@ -2,7 +2,7 @@
 import styles from './page.module.css';
 import { Canvas } from './canvas';
 import { useValue } from './valued';
-import { useFractalDraw } from './fractal';
+import { useFractalDraw } from './(newton)/fractal';
 
 export default function Home() {
     const isRendering = useValue(false);
@@ -15,7 +15,7 @@ export default function Home() {
 
     const onClick = () => {
         isRendering.value = true;
-        startRender(defaultPolynomials[0]);
+        startRender(defaultPolynomials[2]);
     }
 
     return (
