@@ -8,8 +8,8 @@ export interface FractalData {
 
 export const newFractalData = (formula: string): FractalData => {
     const fz = newPolynomial(formula);
-    const roots = fz.roots();
-    console.log("Roots", roots.map(c => ({ re: c.re.toFixed(2), im: c.im.toFixed(2) })));
+    // const roots = fz.roots();
+    // console.log("Roots", roots.map(c => ({ re: c.re.toFixed(2), im: c.im.toFixed(2) })));
     return { fz }
 }
 

@@ -3,7 +3,7 @@ import { useValue } from "../valued";
 import { CanvasDrawFn } from "../canvas";
 import { setterPromise } from "../util";
 import { FractalData, newFractalData, postDraw, renderToCanvas } from "./newton";
-import { getNewton } from "./newton-interface";
+import { getNewtonSync } from "./newton-interface";
 
 interface Data {
     renderData: RenderData,
@@ -64,20 +64,18 @@ const renderFn = (context: CanvasRenderingContext2D, data: Data) => {
 
 export const useFractalDraw = () => {
     const data = useRef(newData());
-    const startRender = (formula: string) => {
+    const startRender = useCallback((formula: string) => {
         data.current.renderData = newRenderData();
-        if (getNewton()) {
-            data.current.fractalData = newFractalData(formula);
-        }
-    };
+        if (getNewtonSync()) { data.current.fractalData = newFractalData(formula); }
+    }, []);
 
     const frameRateStr = useValue('');
     const [setDone, onDone] = setterPromise<number>();
 
-    useEffect(() => { getNewton() });
+    useEffect(() => { getNewtonSync() });
 
     const drawFn = useCallback<CanvasDrawFn>((context: CanvasRenderingContext2D | null) => {
-        if (context == null || !data.current.renderData.isRendering || !getNewton()) return;
+        if (context == null || !data.current.renderData.isRendering || !getNewtonSync()) return;
 
         const result = renderFn(context, data.current);
         if (!result) {

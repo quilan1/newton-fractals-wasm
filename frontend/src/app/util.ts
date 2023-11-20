@@ -12,10 +12,6 @@ export const setterPromise = <T,>(): [Setter<T>, Promise<T>] => {
 }
 
 export const useAsync = (fn: () => Promise<void>, req?: unknown[]) => {
-    useEffect(() => {
-        void (async () => {
-            await fn();
-        })();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [fn, ...req ?? []]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { void fn(); }, [fn, ...req ?? []]);
 }

@@ -4,13 +4,13 @@ export let newton: Newton | null = null;
 
 import { Polynomial, PixelDataRow } from '@/pkg/newton_wasm';
 
-export const getNewton = (): Newton | null => {
-    if (!newton) {
-        void (async () => {
-            newton = await import('@/pkg/newton_wasm');
-        })();
-    }
+export const getNewtonSync = (): Newton | null => {
+    if (!newton) { void getNewtonAsync(); }
+    return newton;
+}
 
+export const getNewtonAsync = async (): Promise<Newton> => {
+    newton = await import('@/pkg/newton_wasm');
     return newton;
 }
 

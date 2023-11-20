@@ -1,4 +1,6 @@
-body {
-    display: flex;
-    flex-direction: row;
+@import "./mixins";
+
+:root {
+    .flex(column, @align: center);
+    .dark-content();
 }
