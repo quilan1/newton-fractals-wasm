@@ -1,4 +1,4 @@
-use newton_core::{calculate_row, pixel_color, OkLchColor, PixelData, CANVAS_SIZE};
+use newton_core::{calculate_row, pixel_color, OklchColor, PixelData, CANVAS_SIZE};
 use wasm_bindgen::prelude::*;
 
 use crate::{polynomial::Polynomial, roots::Roots};
@@ -44,7 +44,7 @@ pub fn render(
 }
 
 fn write_block(
-    roots: &[OkLchColor],
+    roots: &[OklchColor],
     pixel_data: &[PixelData],
     canvas_block_bytes: &mut [u8],
     num_bytes_row: usize,
@@ -58,7 +58,7 @@ fn write_block(
 }
 
 fn write_row(
-    roots: &[OkLchColor],
+    roots: &[OklchColor],
     pixel_data: &[PixelData],
     canvas_row_bytes: &mut [u8],
     num_bytes_chunk: usize,

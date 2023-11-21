@@ -10,14 +10,15 @@ use crate::{
 
 ///////////////////////////////////////////////////////////////////
 
-pub struct OkLchColor {
+#[derive(Clone)]
+pub struct OklchColor {
     pub h: f32,
     pub c: f32,
 }
 
 pub struct Roots {
     pub roots: Vec<Complex32>,
-    pub colors: Vec<OkLchColor>,
+    pub colors: Vec<OklchColor>,
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -34,7 +35,7 @@ impl Roots {
             .map(|z| {
                 let h = z.arg().to_degrees();
                 let c = (z.norm() / 1.5).lerp_clamped(0.01, 0.3);
-                OkLchColor { h, c }
+                OklchColor { h, c }
             })
             .collect();
 
@@ -55,7 +56,7 @@ pub fn roots_of<T: TPolynomial>(fz: &Polynomial<T>) -> Vec<Complex32> {
     }
 
     let mut roots = merge_nearby_roots(roots);
-    roots.sort_by_cached_key(|z| (1000.0 * z.arg().abs()) as i32);
+    roots.sort_by_cached_key(|z| (1000.0 * ((z.arg() + 360.) % 360.)) as i32);
     roots
 }
 

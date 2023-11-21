@@ -6,8 +6,16 @@
     canvas,
     button,
     select {
-        border: 2px solid black;
+        border: 3px solid black;
+    }
+
+    canvas {
         border-style: inset;
+    }
+
+    button,
+    select {
+        border-style: outset;
     }
 }
 
@@ -44,13 +52,13 @@
 
 .renderDisplay() {
     border-radius: 50%;
-    border: 1px solid black;
+    border: 2px outset black;
     width: 0.6rem;
     height: 0.6rem;
 }
 
 .isRendering {
-    background-color: darkgreen;
+    background-color: lightgreen;
     .renderDisplay();
 }
 

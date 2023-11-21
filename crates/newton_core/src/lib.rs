@@ -13,7 +13,7 @@ pub use colors::pixel_color;
 pub use lerp::{ilerp, Lerp};
 pub use pixel_data::PixelData;
 pub use polynomial::FPolynomial as Polynomial;
-pub use roots::{OkLchColor, Roots};
+pub use roots::{OklchColor, Roots};
 
 ///////////////////////////////////////////////////////////////////
 

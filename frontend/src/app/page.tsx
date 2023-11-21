@@ -15,7 +15,7 @@ export default function Home() {
     const render = (formula: string) => { isRendering.value = true; startRender(formula); };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { void getNewtonAsync().then(() => { render(formula.value) }); }, []);
+    useEffect(() => { console.clear(); void getNewtonAsync().then(() => { render(formula.value) }); }, []);
 
     const onChange = (e: ChangeEvent<HTMLSelectElement>) => {
         formula.value = e.target.value;
@@ -56,4 +56,8 @@ const defaultPolynomials = [
     '-2z^6 - 3z^3 - z + 5',
     '-z^9 + 4z^5 - 4z',
     'z^7 - 4z^2 + 2z - 3',
+    'z^4 - 3*z^2 - 4',
+    'z^3 - 2*z + 2',
+    'z^6 - 4*z^4 + 4*z^2 - 4',
+    '4*z^12-9*z^10-26*z^6-z^2+25',
 ];
