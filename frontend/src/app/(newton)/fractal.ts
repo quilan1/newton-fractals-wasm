@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef } from "react";
-import { useValue } from "../valued";
-import { CanvasDrawFn } from "../canvas";
-import { setterPromise } from "../util";
-import { FractalData, newFractalData, postDraw, renderToCanvasRow } from "./newton";
+import { useValue } from "../(util)/valued";
+import { CanvasDrawFn } from "../(util)/canvas";
+import { setterPromise } from "../(util)/util";
+import { FractalData, newFractalData, renderToCanvasRow } from "./newton";
 import { getNewtonSync } from "./newton-interface";
 
 interface Data {
@@ -42,7 +42,7 @@ const renderFn = (context: CanvasRenderingContext2D, data: Data) => {
 
     if (data.renderData.row >= context.canvas.height) {
         if (data.renderData.scale == 1) {
-            postDraw(context, data.fractalData);
+            // postDraw(context, data.fractalData);
             data.renderData.isRendering = false;
             return;
         }

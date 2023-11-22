@@ -1,4 +1,3 @@
-
 import { memo, useEffect, useRef } from "react";
 
 export type CanvasDrawFn = (context: CanvasRenderingContext2D | null) => void;

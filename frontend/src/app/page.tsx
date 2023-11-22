@@ -1,36 +1,14 @@
 'use client';
 import styles from './page.module.css';
-import { Canvas } from './canvas';
-import { useValue } from './valued';
+import { Canvas } from './(util)/canvas';
+import { useValue } from './(util)/valued';
 import { useFractalDraw } from './(newton)/fractal';
 import { getNewtonAsync } from './(newton)/newton-interface';
 import { ChangeEvent, useEffect } from 'react';
+import { useDeferredFnExec } from './(util)/deferred-fn';
 
 export default function Home() {
-    const { drawFn, frameRate, startRender, onDone } = useFractalDraw();
-    const isRendering = useValue(false);
-    const formula = useValue(defaultPolynomials[0]);
-    const dropoff = useValue(0.5);
-
-    // void onDone.then(_duration => { console.log('Rendered:', _duration); isRendering.value = false; });
-    void onDone.then(_duration => { isRendering.value = false; });
-    const render = () => {
-        isRendering.value = true;
-        startRender(formula.value, 1 - dropoff.value * (1 - 0.15));
-    };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { console.clear(); void getNewtonAsync().then(() => { render() }); }, []);
-
-    const onChange = (e: ChangeEvent<HTMLSelectElement>) => {
-        formula.value = e.target.value;
-        render();
-    };
-    const renderClick = () => { render(); };
-    const updateDropoff = (e: ChangeEvent<HTMLInputElement>) => {
-        dropoff.value = Number.parseFloat(e.target.value);
-        render();
-    }
+    const { drawFn, isRendering, formula, dropoff, render, onChangeFormula, onChangeDropoff } = useFractals();
 
     const renderStyle = isRendering.value ? styles.isRendering : styles.notRendering;
 
@@ -38,15 +16,24 @@ export default function Home() {
         <main className={styles.main}>
             <div className={styles.settingsStatus}>
                 <div className={styles.settings}>
-                    <select value={formula.value} onChange={onChange}>
+                    <select value={formula.value} onChange={onChangeFormula}>
                         {defaultPolynomials.map(f => <option key={f} value={f}>{f}</option>)}
                     </select>
-                    <div className={styles.labelRange}><label>Dropoff:</label><input type="range" min="0" max="1" step="0.05" value={dropoff.value} onChange={updateDropoff} /></div>
+                    <div className={styles.labelRange}>
+                        <label>Brightness Dropoff:</label>
+                        <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.05"
+                            value={dropoff.value} onChange={onChangeDropoff}
+                        />
+                    </div>
                 </div>
-                <div><button onClick={renderClick}>Render</button></div>
+                <div><button onClick={render}>Render</button></div>
                 <div className={styles.status}>
                     <div className={styles.frameRate}>
-                        <label>{frameRate.value}</label>
+                        {isRendering.value && <label>Rendering...</label>}
                         <div className={renderStyle} />
                     </div>
                 </div>
@@ -54,6 +41,39 @@ export default function Home() {
             <Canvas drawFn={drawFn} className={styles.fractal} width={800} height={800} />
         </main>
     )
+}
+
+const lerp = (v: number, a: number, b: number) => {
+    return a + v * (b - a);
+}
+
+const useFractals = () => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { console.clear(); void getNewtonAsync().then(() => { render() }); }, []);
+    const { drawFn, startRender, onDone } = useFractalDraw();
+    const isRendering = useValue(false);
+    const formula = useValue(defaultPolynomials[0]);
+    const dropoff = useValue(1.0);
+    const render = () => {
+        isRendering.value = true;
+        startRender(formula.value, lerp(dropoff.value, 1.0, 0.15));
+    };
+    const deferredRender = useDeferredFnExec(0.5, render);
+
+    // void onDone.then(_duration => { console.log('Rendered:', _duration); isRendering.value = false; });
+    void onDone.then(_duration => { isRendering.value = false; });
+
+    const onChangeFormula = (e: ChangeEvent<HTMLSelectElement>) => {
+        formula.value = e.target.value;
+        render();
+    };
+
+    const onChangeDropoff = (e: ChangeEvent<HTMLInputElement>) => {
+        dropoff.value = Number.parseFloat(e.target.value);
+        deferredRender();
+    }
+
+    return { drawFn, isRendering, render, formula, dropoff, onChangeFormula, onChangeDropoff };
 }
 
 const defaultPolynomials = [
