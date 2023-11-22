@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useValue } from "../valued";
 import { CanvasDrawFn } from "../canvas";
 import { setterPromise } from "../util";
-import { FractalData, newFractalData, postDraw, renderToCanvas } from "./newton";
+import { FractalData, newFractalData, postDraw, renderToCanvasRow } from "./newton";
 import { getNewtonSync } from "./newton-interface";
 
 interface Data {
@@ -53,7 +53,7 @@ const renderFn = (context: CanvasRenderingContext2D, data: Data) => {
     const start = Date.now();
     let numFrames = 0;
     while (numFrames == 0 || (Date.now() - start < msPerFrame && data.renderData.row < context.canvas.height)) {
-        renderToCanvas(context, data.renderData, data.fractalData);
+        renderToCanvasRow(context, data.renderData, data.fractalData);
         data.renderData.row += data.renderData.scale;
         numFrames += 1;
     }
@@ -64,9 +64,9 @@ const renderFn = (context: CanvasRenderingContext2D, data: Data) => {
 
 export const useFractalDraw = () => {
     const data = useRef(newData());
-    const startRender = useCallback((formula: string) => {
+    const startRender = useCallback((formula: string, dropoff: number) => {
         data.current.renderData = newRenderData();
-        if (getNewtonSync()) { data.current.fractalData = newFractalData(formula); }
+        if (getNewtonSync()) { data.current.fractalData = newFractalData(formula, dropoff); }
     }, []);
 
     const frameRateStr = useValue('');
@@ -87,5 +87,5 @@ export const useFractalDraw = () => {
         frameRateStr.value = `${numFrames} rows/frame, ${frameRate.toFixed(2)} ms`;
     }, [setDone, frameRateStr]);
 
-    return { drawFn, frameRate: frameRateStr, startRender, onDone };
+    return { drawFn, frameRate: frameRateStr, startRender, onDone, data: data.current };
 }

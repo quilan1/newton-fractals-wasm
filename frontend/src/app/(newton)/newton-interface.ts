@@ -2,7 +2,7 @@
 export type Newton = typeof import('@/pkg/newton_wasm');
 export let newton: Newton | null = null;
 
-import { Polynomial, PixelDataRow, Roots } from '@/pkg/newton_wasm';
+import { Polynomial, PixelDataBuffer, Roots } from '@/pkg/newton_wasm';
 
 export const getNewtonSync = (): Newton | null => {
     if (!newton) { void getNewtonAsync(); }
@@ -30,12 +30,20 @@ export const newRoots = (fz: Polynomial): Roots => {
     return new newton!.Roots(fz);
 }
 
-export const calculate = (fz: Polynomial, roots: Roots, renderScale: number, row: number): PixelDataRow => {
+export const calculateRow = (fz: Polynomial, roots: Roots, renderScale: number, row: number): PixelDataBuffer => {
     assertNewton(newton);
-    return newton!.calculate(fz, roots, renderScale, row);
+    return newton!.calculateRow(fz, roots, renderScale, row);
 }
 
-export const render = (context: CanvasRenderingContext2D, roots: Roots, renderScale: number, row: number, pixelDataRow: PixelDataRow) => {
+export const renderRow = (
+    context: CanvasRenderingContext2D, roots: Roots, pdb: PixelDataBuffer, pdbRow: PixelDataBuffer, renderScale: number, row: number,
+    dropoff: number,
+) => {
     assertNewton(newton);
-    newton!.render(context, roots, renderScale, row, pixelDataRow);
+    newton!.renderRow(context, roots, pdb, pdbRow, renderScale, row, dropoff);
+}
+
+export const newImagePixelDataBuffer = (): PixelDataBuffer => {
+    assertNewton(newton);
+    return newton!.newImagePixelDataBuffer();
 }

@@ -1,7 +1,6 @@
 use num_complex::Complex32;
 
 use crate::{
-    ilerp,
     pixel_data::PixelData,
     polynomial::{Polynomial, TPolynomial},
     Lerp, CANVAS_SIZE, COMPLEX_WINDOW, LOG_EPSILON, MAX_NEWTON_COUNT,
@@ -43,7 +42,7 @@ pub fn newtons_method<T: TPolynomial>(fz: &Polynomial<T>, mut z: Complex32) -> (
         let f0 = fz.f0(z);
         let log_norm = f0.norm_sqr().log10();
         if log_norm <= LOG_EPSILON {
-            count += ilerp(LOG_EPSILON, prev_log_norm, log_norm);
+            count += LOG_EPSILON.ilerp_clamped(prev_log_norm, log_norm);
             break;
         }
         z -= f0 / fz.f1(z);

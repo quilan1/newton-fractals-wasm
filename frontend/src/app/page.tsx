@@ -10,18 +10,27 @@ export default function Home() {
     const { drawFn, frameRate, startRender, onDone } = useFractalDraw();
     const isRendering = useValue(false);
     const formula = useValue(defaultPolynomials[0]);
+    const dropoff = useValue(0.5);
 
+    // void onDone.then(_duration => { console.log('Rendered:', _duration); isRendering.value = false; });
     void onDone.then(_duration => { isRendering.value = false; });
-    const render = (formula: string) => { isRendering.value = true; startRender(formula); };
+    const render = () => {
+        isRendering.value = true;
+        startRender(formula.value, 1 - dropoff.value * (1 - 0.15));
+    };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { console.clear(); void getNewtonAsync().then(() => { render(formula.value) }); }, []);
+    useEffect(() => { console.clear(); void getNewtonAsync().then(() => { render() }); }, []);
 
     const onChange = (e: ChangeEvent<HTMLSelectElement>) => {
         formula.value = e.target.value;
-        render(e.target.value);
+        render();
     };
-    const renderClick = () => { render(formula.value); };
+    const renderClick = () => { render(); };
+    const updateDropoff = (e: ChangeEvent<HTMLInputElement>) => {
+        dropoff.value = Number.parseFloat(e.target.value);
+        render();
+    }
 
     const renderStyle = isRendering.value ? styles.isRendering : styles.notRendering;
 
@@ -32,6 +41,7 @@ export default function Home() {
                     <select value={formula.value} onChange={onChange}>
                         {defaultPolynomials.map(f => <option key={f} value={f}>{f}</option>)}
                     </select>
+                    <div className={styles.labelRange}><label>Dropoff:</label><input type="range" min="0" max="1" step="0.05" value={dropoff.value} onChange={updateDropoff} /></div>
                 </div>
                 <div><button onClick={renderClick}>Render</button></div>
                 <div className={styles.status}>
@@ -59,5 +69,5 @@ const defaultPolynomials = [
     'z^4 - 3*z^2 - 4',
     'z^3 - 2*z + 2',
     'z^6 - 4*z^4 + 4*z^2 - 4',
-    '4*z^12-9*z^10-26*z^6-z^2+25',
+    '4z^12 - 9z^10 - 26z^6 - z^2 + 25',
 ];

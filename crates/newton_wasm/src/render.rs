@@ -1,81 +1,68 @@
-use newton_core::{calculate_row, pixel_color, OklchColor, PixelData, CANVAS_SIZE};
+use newton_core::{calc_luminance_max, pixel_color, PixelData, CANVAS_SIZE};
 use wasm_bindgen::prelude::*;
 
-use crate::{polynomial::Polynomial, roots::Roots};
+use crate::{
+    pixel_data_buffer::PixelDataBuffer, polynomial::Polynomial, roots::Roots,
+    scale_row::write_scaled_block,
+};
 
-#[wasm_bindgen]
-pub struct PixelDataRow(Vec<PixelData>);
-
-#[wasm_bindgen]
-pub fn calculate(fz: &Polynomial, roots: &Roots, render_scale: usize, row: usize) -> PixelDataRow {
-    let pixel_count = CANVAS_SIZE / render_scale;
-    let mut pixel_data = vec![PixelData(0); pixel_count];
-    calculate_row(&fz.poly, &roots.0.roots, row, &mut pixel_data);
-    PixelDataRow(pixel_data)
+#[wasm_bindgen(js_name = newImagePixelDataBuffer)]
+pub fn new_image_pixel_data_buffer() -> PixelDataBuffer {
+    let pixel_data = vec![PixelData(0); CANVAS_SIZE * CANVAS_SIZE];
+    PixelDataBuffer::new(pixel_data)
 }
 
-#[wasm_bindgen]
-pub fn render(
-    ctx: &web_sys::CanvasRenderingContext2d,
+#[wasm_bindgen(js_name = calculateRow)]
+pub fn calculate_row(
+    fz: &Polynomial,
     roots: &Roots,
     render_scale: usize,
     row: usize,
-    pixel_data_row: &PixelDataRow,
-) -> Result<(), JsValue> {
-    let num_pixels_chunk = render_scale;
-    let num_pixels_row = CANVAS_SIZE;
-    let num_pixels_block = num_pixels_row * num_pixels_chunk;
+) -> PixelDataBuffer {
+    let pixel_count = CANVAS_SIZE / render_scale;
+    let mut pixel_data = vec![PixelData(0); pixel_count];
+    newton_core::calculate_row(&fz.poly, &roots.0.roots, row, &mut pixel_data);
+    PixelDataBuffer::new(pixel_data)
+}
 
-    let mut canvas_block_bytes = vec![0; 4 * num_pixels_block];
-    write_block(
-        &roots.0.colors,
-        &pixel_data_row.0,
-        &mut canvas_block_bytes,
-        4 * num_pixels_row,
-        4 * num_pixels_chunk,
+#[wasm_bindgen(js_name = renderRow)]
+pub fn render_row(
+    ctx: &web_sys::CanvasRenderingContext2d,
+    roots: &Roots,
+    pdb: &mut PixelDataBuffer,
+    row_pdb: &PixelDataBuffer,
+    render_scale: usize,
+    row: usize,
+    dropoff: f32,
+) -> Result<(), JsValue> {
+    let pdb_row_offset = row * CANVAS_SIZE;
+    let pdb_block_len = CANVAS_SIZE * render_scale;
+    let pdb_slice = &mut pdb.pixel_data[pdb_row_offset..pdb_row_offset + pdb_block_len];
+
+    let mut canvas_bytes = vec![0; 4 * pdb_block_len];
+    let canvas_pixels = unsafe { canvas_bytes.align_to_mut::<[u8; 4]>().1 };
+
+    let luminance_max = calc_luminance_max(dropoff);
+    write_scaled_block(
+        canvas_pixels,
+        &row_pdb.pixel_data,
+        render_scale,
+        |input| pixel_color(*input, &roots.0.colors, luminance_max, dropoff),
+        |output, pixel| output.copy_from_slice(pixel),
+    );
+
+    write_scaled_block(
+        pdb_slice,
+        &row_pdb.pixel_data,
+        render_scale,
+        |input| *input,
+        |output, input| *output = *input,
     );
 
     let image_data = web_sys::ImageData::new_with_u8_clamped_array(
-        wasm_bindgen::Clamped(&canvas_block_bytes),
+        wasm_bindgen::Clamped(&canvas_bytes),
         CANVAS_SIZE as u32,
     )?;
     ctx.put_image_data(&image_data, 0.0, row as f64)?;
     Ok(())
-}
-
-fn write_block(
-    roots: &[OklchColor],
-    pixel_data: &[PixelData],
-    canvas_block_bytes: &mut [u8],
-    num_bytes_row: usize,
-    num_bytes_chunk: usize,
-) {
-    canvas_block_bytes
-        .chunks_mut(num_bytes_row)
-        .for_each(|canvas_row_bytes| {
-            write_row(roots, pixel_data, canvas_row_bytes, num_bytes_chunk);
-        });
-}
-
-fn write_row(
-    roots: &[OklchColor],
-    pixel_data: &[PixelData],
-    canvas_row_bytes: &mut [u8],
-    num_bytes_chunk: usize,
-) {
-    canvas_row_bytes
-        .chunks_mut(num_bytes_chunk)
-        .zip(pixel_data)
-        .for_each(|(canvas_chunk_bytes, &pixel_data)| {
-            let pixel_bytes = pixel_color(pixel_data, roots);
-            write_chunk(canvas_chunk_bytes, &pixel_bytes);
-        });
-}
-
-fn write_chunk(canvas_chunk_bytes: &mut [u8], pixel_bytes: &[u8]) {
-    canvas_chunk_bytes
-        .chunks_mut(4)
-        .for_each(|canvas_pixel_bytes| {
-            canvas_pixel_bytes.copy_from_slice(pixel_bytes);
-        });
 }

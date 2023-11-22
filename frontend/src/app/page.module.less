@@ -3,19 +3,9 @@
 .main {
     .flex(column, @align: center, @gap: 0.5rem);
 
-    canvas,
-    button,
-    select {
-        border: 3px solid black;
-    }
-
     canvas {
+        border: 3px solid black;
         border-style: inset;
-    }
-
-    button,
-    select {
-        border-style: outset;
     }
 }
 
@@ -32,12 +22,17 @@
 }
 
 .settings {
-    .flex(column);
+    .flex(column, @gap: 0.5rem);
     flex: 1;
 
     >select {
+        grid-column: span 2;
         width: fit-content;
     }
+}
+
+.labelRange {
+    .flex(row, @gap: 0.5rem);
 }
 
 .status {

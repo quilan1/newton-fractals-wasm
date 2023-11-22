@@ -1,7 +1,9 @@
 mod complex;
+mod pixel_data_buffer;
 mod polynomial;
 mod render;
 mod roots;
+mod scale_row;
 
 use newton_core::{CANVAS_SIZE, COMPLEX_WINDOW};
 use wasm_bindgen::prelude::*;
@@ -13,12 +15,12 @@ pub fn run() {
     console_log::init().expect("Error intializing log");
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = complexWindow)]
 pub fn complex_window() -> f32 {
     COMPLEX_WINDOW
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = complexSize)]
 pub fn canvas_size() -> usize {
     CANVAS_SIZE
 }

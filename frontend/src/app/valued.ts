@@ -4,8 +4,8 @@ export type SimpleSetter<T> = (_: T) => void;
 export type SimpleValueSetter<T> = [T, SimpleSetter<T>];
 
 export class Valued<T> {
-    readonly state: T;
-    readonly setState: SimpleSetter<T>;
+    private state: T;
+    private readonly setState: SimpleSetter<T>;
     constructor(def: SimpleValueSetter<T>) {
         const [state, setState] = def;
         this.state = state;
@@ -13,7 +13,7 @@ export class Valued<T> {
     }
 
     get value(): T { return this.state };
-    set value(value: T) { this.setState(value); }
+    set value(value: T) { this.setState(value); this.state = value; }
 }
 
 export function useValue<T = undefined>(): Valued<T | undefined>;

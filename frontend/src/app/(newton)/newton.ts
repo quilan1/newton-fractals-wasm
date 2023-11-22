@@ -1,14 +1,16 @@
 /* eslint-disable @typescript-eslint/prefer-for-of */
-import { OklchColor, Polynomial, Roots } from "@/pkg/newton_wasm";
-import { calculate, newPolynomial, newRoots, render } from "./newton-interface";
+import { OklchColor, PixelDataBuffer, Polynomial, Roots } from "@/pkg/newton_wasm";
+import { calculateRow, newImagePixelDataBuffer, newPolynomial, newRoots, renderRow } from "./newton-interface";
 import { RenderData } from "./fractal";
 
 export interface FractalData {
     fz: Polynomial,
     roots: Roots,
+    pdb: PixelDataBuffer,
+    dropoff: number,
 }
 
-export const newFractalData = (formula: string): FractalData => {
+export const newFractalData = (formula: string, dropoff: number): FractalData => {
     const fz = newPolynomial(formula);
     const roots = newRoots(fz);
     const colors = roots.colors();
@@ -16,16 +18,17 @@ export const newFractalData = (formula: string): FractalData => {
     // console.log("Roots", roots.roots().map(c => ({ re: c.re.toFixed(2), im: c.im.toFixed(2) })));
     const _colors = spreadColors(colors);
     roots.set_colors(_colors);
-    return { fz, roots }
+    const pdb = newImagePixelDataBuffer();
+    return { fz, roots, pdb, dropoff }
 }
 
-export const renderToCanvas = (
+export const renderToCanvasRow = (
     context: CanvasRenderingContext2D, renderData: RenderData, fractalData: FractalData
 ) => {
     const { row, scale } = renderData;
-    const { fz, roots } = fractalData;
-    const row_data = calculate(fz, roots, scale, row);
-    render(context, roots, scale, row, row_data);
+    const { fz, roots, pdb, dropoff } = fractalData;
+    const pdbRow = calculateRow(fz, roots, scale, row);
+    renderRow(context, roots, pdb, pdbRow, scale, row, dropoff);
 }
 
 export const postDraw = (context: CanvasRenderingContext2D, fractalData: FractalData) => {
