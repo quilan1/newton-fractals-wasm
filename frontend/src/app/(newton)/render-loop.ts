@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useRef } from "react";
-import { useValue } from "../(util)/valued";
+import { useCallback, useRef } from "react";
 import { CanvasDrawFn } from "../(util)/canvas";
 import { setterPromise } from "../(util)/util";
-import { FractalData, newFractalData, renderToCanvasRow } from "./newton";
+import { FractalData, newFractalData, renderToCanvasRow } from "./render";
 import { getNewtonSync } from "./newton-interface";
 
 interface Data {
@@ -62,17 +61,16 @@ const renderFn = (context: CanvasRenderingContext2D, data: Data) => {
     return { frameRate, numFrames };
 }
 
+export type RenderFn = (formula: string, dropoff: number, zoom: number) => void;
+
 export const useFractalDraw = () => {
     const data = useRef(newData());
-    const startRender = useCallback((formula: string, dropoff: number) => {
+    const startRender: RenderFn = useCallback((formula: string, dropoff: number, zoom: number) => {
         data.current.renderData = newRenderData();
-        if (getNewtonSync()) { data.current.fractalData = newFractalData(formula, dropoff); }
+        if (getNewtonSync()) { data.current.fractalData = newFractalData(formula, dropoff, zoom); }
     }, []);
 
-    const frameRateStr = useValue('');
     const [setDone, onDone] = setterPromise<number>();
-
-    useEffect(() => { getNewtonSync() });
 
     const drawFn = useCallback<CanvasDrawFn>((context: CanvasRenderingContext2D | null) => {
         if (context == null || !data.current.renderData.isRendering || !getNewtonSync()) return;
@@ -82,10 +80,7 @@ export const useFractalDraw = () => {
             setDone(Date.now() - data.current.renderData.startTime);
             return;
         }
+    }, [setDone]);
 
-        const { numFrames, frameRate } = result;
-        frameRateStr.value = `${numFrames} rows/frame, ${frameRate.toFixed(2)} ms`;
-    }, [setDone, frameRateStr]);
-
-    return { drawFn, frameRate: frameRateStr, startRender, onDone, data: data.current };
+    return { drawFn, startRender, onDone, data: data.current };
 }

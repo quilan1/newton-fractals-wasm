@@ -30,9 +30,9 @@ export const newRoots = (fz: Polynomial): Roots => {
     return new newton!.Roots(fz);
 }
 
-export const calculateRow = (fz: Polynomial, roots: Roots, renderScale: number, row: number): PixelDataBuffer => {
+export const calculateRow = (fz: Polynomial, roots: Roots, zoom: number, renderScale: number, row: number): PixelDataBuffer => {
     assertNewton(newton);
-    return newton!.calculateRow(fz, roots, renderScale, row);
+    return newton!.calculateRow(fz, roots, zoom, renderScale, row);
 }
 
 export const renderRow = (

@@ -1,16 +1,17 @@
 /* eslint-disable @typescript-eslint/prefer-for-of */
 import { OklchColor, PixelDataBuffer, Polynomial, Roots } from "@/pkg/newton_wasm";
 import { calculateRow, newImagePixelDataBuffer, newPolynomial, newRoots, renderRow } from "./newton-interface";
-import { RenderData } from "./fractal";
+import { RenderData } from "./render-loop";
 
 export interface FractalData {
     fz: Polynomial,
     roots: Roots,
     pdb: PixelDataBuffer,
     dropoff: number,
+    zoom: number,
 }
 
-export const newFractalData = (formula: string, dropoff: number): FractalData => {
+export const newFractalData = (formula: string, dropoff: number, zoom: number): FractalData => {
     const fz = newPolynomial(formula);
     const roots = newRoots(fz);
     const colors = roots.colors();
@@ -19,15 +20,15 @@ export const newFractalData = (formula: string, dropoff: number): FractalData =>
     const _colors = spreadColors(colors);
     roots.set_colors(_colors);
     const pdb = newImagePixelDataBuffer();
-    return { fz, roots, pdb, dropoff }
+    return { fz, roots, pdb, dropoff, zoom }
 }
 
 export const renderToCanvasRow = (
     context: CanvasRenderingContext2D, renderData: RenderData, fractalData: FractalData
 ) => {
     const { row, scale } = renderData;
-    const { fz, roots, pdb, dropoff } = fractalData;
-    const pdbRow = calculateRow(fz, roots, scale, row);
+    const { fz, roots, pdb, dropoff, zoom } = fractalData;
+    const pdbRow = calculateRow(fz, roots, zoom, scale, row);
     renderRow(context, roots, pdb, pdbRow, scale, row, dropoff);
 }
 

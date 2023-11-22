@@ -11,12 +11,16 @@ use crate::{
 pub fn calculate_row<T: TPolynomial>(
     fz: &Polynomial<T>,
     roots: &[Complex32],
+    zoom: f32,
     row: usize,
     pixel_data: &mut [PixelData],
 ) {
-    let z_im = (row as f32 / CANVAS_SIZE as f32).lerp(-COMPLEX_WINDOW, COMPLEX_WINDOW);
-    let delta_re = 2.0 * COMPLEX_WINDOW / pixel_data.len() as f32;
-    let mut z_re = -COMPLEX_WINDOW;
+    let zoom = 2.0f32.powf(-zoom);
+    let z_im_minmax = COMPLEX_WINDOW * zoom;
+
+    let z_im = (row as f32 / CANVAS_SIZE as f32).lerp(-z_im_minmax, z_im_minmax);
+    let delta_re = 2.0 * z_im_minmax / pixel_data.len() as f32;
+    let mut z_re = -z_im_minmax;
 
     pixel_data.iter_mut().for_each(|pixel| {
         *pixel = calculate_pixel(fz, roots, Complex32::new(z_re, z_im));

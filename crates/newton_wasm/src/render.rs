@@ -16,12 +16,13 @@ pub fn new_image_pixel_data_buffer() -> PixelDataBuffer {
 pub fn calculate_row(
     fz: &Polynomial,
     roots: &Roots,
+    zoom: f32,
     render_scale: usize,
     row: usize,
 ) -> PixelDataBuffer {
     let pixel_count = CANVAS_SIZE / render_scale;
     let mut pixel_data = vec![PixelData(0); pixel_count];
-    newton_core::calculate_row(&fz.poly, &roots.0.roots, row, &mut pixel_data);
+    newton_core::calculate_row(&fz.poly, &roots.0.roots, zoom, row, &mut pixel_data);
     PixelDataBuffer::new(pixel_data)
 }
 

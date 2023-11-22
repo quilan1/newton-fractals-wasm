@@ -1,14 +1,15 @@
 'use client';
 import styles from './page.module.css';
 import { Canvas } from './(util)/canvas';
-import { useValue } from './(util)/valued';
-import { useFractalDraw } from './(newton)/fractal';
+import { Valued, useValue } from './(util)/valued';
+import { useFractalDraw } from './(newton)/render-loop';
 import { getNewtonAsync } from './(newton)/newton-interface';
-import { ChangeEvent, useEffect } from 'react';
+import { ChangeEvent, MutableRefObject, WheelEvent, useEffect, useRef } from 'react';
 import { useDeferredFnExec } from './(util)/deferred-fn';
 
 export default function Home() {
-    const { drawFn, isRendering, formula, dropoff, render, onChangeFormula, onChangeDropoff } = useFractals();
+    const { drawFn, isRendering, formula, dropoff, render, zoom } = useFractals();
+    const { onChangeFormula, onChangeDropoff, onWheel } = useOnChanges(formula, dropoff, zoom, render);
 
     const renderStyle = isRendering.value ? styles.isRendering : styles.notRendering;
 
@@ -38,43 +39,55 @@ export default function Home() {
                     </div>
                 </div>
             </div>
-            <Canvas drawFn={drawFn} className={styles.fractal} width={800} height={800} />
+            <Canvas drawFn={drawFn} className={styles.fractal} onWheel={onWheel} width={800} height={800} />
         </main>
     )
 }
 
-const lerp = (v: number, a: number, b: number) => {
-    return a + v * (b - a);
-}
-
 const useFractals = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { console.clear(); void getNewtonAsync().then(() => { render() }); }, []);
+    useEffect(() => { console.clear(); void getNewtonAsync().then(() => { renderFn() }); }, []);
     const { drawFn, startRender, onDone } = useFractalDraw();
-    const isRendering = useValue(false);
     const formula = useValue(defaultPolynomials[0]);
     const dropoff = useValue(1.0);
-    const render = () => {
-        isRendering.value = true;
-        startRender(formula.value, lerp(dropoff.value, 1.0, 0.15));
-    };
-    const deferredRender = useDeferredFnExec(0.5, render);
+    const isRendering = useValue(false);
+    const zoom = useRef(0.0);
 
     // void onDone.then(_duration => { console.log('Rendered:', _duration); isRendering.value = false; });
     void onDone.then(_duration => { isRendering.value = false; });
 
+    const renderFn = () => {
+        isRendering.value = true;
+        const _dropoff = lerp(dropoff.value, 1.0, 0.15);
+        startRender(formula.value, _dropoff, zoom.current);
+    };
+    const render = useDeferredFnExec(0.2, renderFn);
+
+    return { drawFn, isRendering, render, formula, dropoff, zoom };
+}
+
+const useOnChanges = (formula: Valued<string>, dropoff: Valued<number>, zoom: MutableRefObject<number>, render: () => void) => {
     const onChangeFormula = (e: ChangeEvent<HTMLSelectElement>) => {
         formula.value = e.target.value;
+        zoom.current = 0.0;
         render();
     };
 
     const onChangeDropoff = (e: ChangeEvent<HTMLInputElement>) => {
         dropoff.value = Number.parseFloat(e.target.value);
-        deferredRender();
+        render();
     }
 
-    return { drawFn, isRendering, render, formula, dropoff, onChangeFormula, onChangeDropoff };
+    const onWheel = (e: WheelEvent<HTMLCanvasElement>) => {
+        const zoomAdjust = -e.deltaY / 1000;
+        zoom.current += zoomAdjust;
+        render();
+    }
+
+    return { onChangeFormula, onChangeDropoff, onWheel };
 }
+
+const lerp = (v: number, a: number, b: number) => a + v * (b - a);
 
 const defaultPolynomials = [
     'z^13 - 3*z^6 + z - 1',
