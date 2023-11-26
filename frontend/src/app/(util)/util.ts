@@ -15,3 +15,8 @@ export const useAsync = (fn: () => Promise<void>, req?: unknown[]) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { void fn(); }, [fn, ...req ?? []]);
 }
+
+export const classNames = (styles: Record<string, string>, classes: (string | undefined)[]): string => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-condition
+    return classes.filter(c => c?.length ?? 0).map(c => styles[c!]).filter(c => c?.length ?? 0).join(' ');
+}

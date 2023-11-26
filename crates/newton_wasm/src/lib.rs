@@ -20,7 +20,7 @@ pub fn complex_window() -> f32 {
     COMPLEX_WINDOW
 }
 
-#[wasm_bindgen(js_name = complexSize)]
+#[wasm_bindgen(js_name = canvasSize)]
 pub fn canvas_size() -> usize {
     CANVAS_SIZE
 }

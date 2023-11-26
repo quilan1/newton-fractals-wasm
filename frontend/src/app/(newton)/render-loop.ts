@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 import { CanvasDrawFn } from "../(util)/canvas";
 import { setterPromise } from "../(util)/util";
-import { FractalData, newFractalData, renderToCanvasRow } from "./render";
+import { FractalData, freeFractalData, newFractalData, postDraw, renderToCanvasRow } from "./render";
 import { getNewtonSync } from "./newton-interface";
 
 interface Data {
@@ -41,7 +41,6 @@ const renderFn = (context: CanvasRenderingContext2D, data: Data) => {
 
     if (data.renderData.row >= context.canvas.height) {
         if (data.renderData.scale == 1) {
-            // postDraw(context, data.fractalData);
             data.renderData.isRendering = false;
             return;
         }
@@ -56,18 +55,22 @@ const renderFn = (context: CanvasRenderingContext2D, data: Data) => {
         data.renderData.row += data.renderData.scale;
         numFrames += 1;
     }
+    postDraw(context, data.fractalData);
 
     const frameRate = (Date.now() - start) / numFrames;
     return { frameRate, numFrames };
 }
 
-export type RenderFn = (formula: string, dropoff: number, zoom: number) => void;
+export type RenderFn = (formula: string, dropoff: number, zoom: number, center: [number, number]) => void;
 
 export const useFractalDraw = () => {
     const data = useRef(newData());
-    const startRender: RenderFn = useCallback((formula: string, dropoff: number, zoom: number) => {
+    const startRender: RenderFn = useCallback((formula: string, dropoff: number, zoom: number, center: [number, number]) => {
         data.current.renderData = newRenderData();
-        if (getNewtonSync()) { data.current.fractalData = newFractalData(formula, dropoff, zoom); }
+        if (getNewtonSync()) {
+            freeFractalData(data.current.fractalData);
+            data.current.fractalData = newFractalData(formula, dropoff, zoom, center);
+        }
     }, []);
 
     const [setDone, onDone] = setterPromise<number>();

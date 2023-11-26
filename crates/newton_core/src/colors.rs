@@ -9,6 +9,9 @@ pub fn pixel_color<P: Into<PixelDataDetail>>(
     dropoff: f32,
 ) -> [u8; 4] {
     let PixelDataDetail { root_index, frac } = pixel_data.into();
+    if frac == 1.0 {
+        return [0, 0, 0, 255];
+    }
     let v = 1. - brightness_transform(frac, dropoff);
     let v = v.ilerp_clamped(0., luminance_max);
 

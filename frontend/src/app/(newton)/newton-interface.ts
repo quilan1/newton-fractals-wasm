@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 export type Newton = typeof import('@/pkg/newton_wasm');
+export type Wasm = typeof import('@/pkg/newton_wasm_bg.wasm');
 export let newton: Newton | null = null;
+export let wasm: Wasm | null = null;
 
 import { Polynomial, PixelDataBuffer, Roots } from '@/pkg/newton_wasm';
 
@@ -12,6 +14,17 @@ export const getNewtonSync = (): Newton | null => {
 export const getNewtonAsync = async (): Promise<Newton> => {
     newton = await import('@/pkg/newton_wasm');
     return newton;
+}
+
+export const getWasmAsync = async (): Promise<Wasm> => {
+    wasm = await import("@/pkg/newton_wasm_bg.wasm");
+    return wasm;
+}
+
+export const wasmMemoryUsage = () => {
+    void getWasmAsync();
+    if (!wasm) return null;
+    return wasm.memory.buffer.byteLength;
 }
 
 const assertNewton = (newton: Newton | null) => {
@@ -30,9 +43,9 @@ export const newRoots = (fz: Polynomial): Roots => {
     return new newton!.Roots(fz);
 }
 
-export const calculateRow = (fz: Polynomial, roots: Roots, zoom: number, renderScale: number, row: number): PixelDataBuffer => {
+export const calculateRow = (fz: Polynomial, roots: Roots, zoom: number, center: [number, number], renderScale: number, row: number): PixelDataBuffer => {
     assertNewton(newton);
-    return newton!.calculateRow(fz, roots, zoom, renderScale, row);
+    return newton!.calculateRow(fz, roots, zoom, center[0], center[1], renderScale, row);
 }
 
 export const renderRow = (
@@ -46,4 +59,9 @@ export const renderRow = (
 export const newImagePixelDataBuffer = (): PixelDataBuffer => {
     assertNewton(newton);
     return newton!.newImagePixelDataBuffer();
+}
+
+export const isValidFormula = (_formula: string) => {
+    // const re = /^(\s*[+-]\d*\*?(z(\^\d+)?)?)+/;
+    return false;
 }
