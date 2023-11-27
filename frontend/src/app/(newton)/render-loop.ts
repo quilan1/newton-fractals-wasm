@@ -5,7 +5,7 @@ import { FractalData, freeFractalData, newFractalData, postDraw, renderToCanvasR
 import { Point } from "../(util)/transform";
 import { getNewtonSync } from "./(wrapper)/consts";
 
-interface Data {
+interface RenderStateData {
     renderData: RenderData,
     fractalData?: FractalData,
 }
@@ -17,7 +17,7 @@ export interface RenderData {
     scale: number,
 }
 
-const newData = (): Data => {
+const newRenderStateData = (): RenderStateData => {
     const renderData = newRenderData();
     renderData.isRendering = false;
     return { renderData };
@@ -30,12 +30,11 @@ const newRenderData = () => ({
     scale: 32
 });
 
-const renderFn = (context: CanvasRenderingContext2D, data: Data) => {
+const renderFn = (context: CanvasRenderingContext2D, data: RenderStateData) => {
     const desiredFrameRate = 60;
     const msPerFrame = 1000 / desiredFrameRate;
 
     if (!data.fractalData) {
-        console.log('No fractal data, for some reason, aborting');
         data.renderData.isRendering = false;
         return;
     }
@@ -65,7 +64,7 @@ const renderFn = (context: CanvasRenderingContext2D, data: Data) => {
 export type RenderFn = (formula: string, dropoff: number, zoom: number, center: Point) => void;
 
 export const useFractalDraw = () => {
-    const data = useRef(newData());
+    const data = useRef(newRenderStateData());
     const startRender: RenderFn = useCallback((formula: string, dropoff: number, zoom: number, center: Point) => {
         data.current.renderData = newRenderData();
         if (getNewtonSync()) {
