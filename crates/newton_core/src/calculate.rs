@@ -24,7 +24,7 @@ pub fn calculate_row<T: TPolynomial>(
     let mut z_re = -z_im_minmax;
 
     pixel_data.iter_mut().for_each(|pixel| {
-        *pixel = calculate_pixel(fz, roots, Complex32::new(z_re, z_im) - center);
+        *pixel = calculate_pixel(fz, roots, Complex32::new(z_re, z_im) + center);
         z_re += delta_re;
     });
 }

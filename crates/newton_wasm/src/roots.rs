@@ -3,7 +3,7 @@ use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 use web_sys::js_sys::Array;
 
-use crate::{complex::Complex, polynomial::Polynomial};
+use crate::{complex::Complex, polynomial::Polynomial, TryFromJs};
 
 #[wasm_bindgen]
 pub struct Roots(pub(crate) R);
@@ -14,6 +14,8 @@ pub struct OklchColor {
     pub h: f32,
     pub c: f32,
 }
+
+impl TryFromJs<OklchColor> for JsValue {}
 
 #[wasm_bindgen]
 impl Roots {
@@ -45,7 +47,9 @@ impl Roots {
         }
 
         for (index, color) in colors.iter().enumerate() {
-            let color: OklchColor = serde_wasm_bindgen::from_value(color)?;
+            let color: OklchColor = color.try_from_js()?;
+
+            // let color: OklchColor = serde_wasm_bindgen::from_value(color)?;
             self.0.colors[index] = color.into();
         }
 

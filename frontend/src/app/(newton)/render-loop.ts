@@ -2,7 +2,8 @@ import { useCallback, useRef } from "react";
 import { CanvasDrawFn } from "../(util)/canvas";
 import { setterPromise } from "../(util)/util";
 import { FractalData, freeFractalData, newFractalData, postDraw, renderToCanvasRow } from "./render";
-import { getNewtonSync } from "./newton-interface";
+import { Point } from "../(util)/transform";
+import { getNewtonSync } from "./(wrapper)/consts";
 
 interface Data {
     renderData: RenderData,
@@ -61,11 +62,11 @@ const renderFn = (context: CanvasRenderingContext2D, data: Data) => {
     return { frameRate, numFrames };
 }
 
-export type RenderFn = (formula: string, dropoff: number, zoom: number, center: [number, number]) => void;
+export type RenderFn = (formula: string, dropoff: number, zoom: number, center: Point) => void;
 
 export const useFractalDraw = () => {
     const data = useRef(newData());
-    const startRender: RenderFn = useCallback((formula: string, dropoff: number, zoom: number, center: [number, number]) => {
+    const startRender: RenderFn = useCallback((formula: string, dropoff: number, zoom: number, center: Point) => {
         data.current.renderData = newRenderData();
         if (getNewtonSync()) {
             freeFractalData(data.current.fractalData);

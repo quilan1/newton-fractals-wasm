@@ -2,17 +2,20 @@
 import { OklchColor, PixelDataBuffer, Polynomial, Roots } from "@/pkg/newton_wasm";
 import { calculateRow, newImagePixelDataBuffer, newPolynomial, newRoots, renderRow } from "./newton-interface";
 import { RenderData } from "./render-loop";
+import { Point, applyTransforms, invert, transformMany } from "../(util)/transform";
+import { canvasToUnitTransform, toCanvasCenter } from "./(wrapper)/transforms";
 
 export interface FractalData {
     fz: Polynomial,
     roots: Roots,
     pdb: PixelDataBuffer,
     dropoff: number,
+    // transform: Transform,
     zoom: number,
-    center: [number, number],
+    center: Point,
 }
 
-export const newFractalData = (formula: string, dropoff: number, zoom: number, center: [number, number]): FractalData => {
+export const newFractalData = (formula: string, dropoff: number, zoom: number, center: Point): FractalData => {
     const fz = newPolynomial(formula);
     const roots = newRoots(fz);
     const colors = roots.colors();
@@ -47,9 +50,9 @@ export const postDraw = (context: CanvasRenderingContext2D, fractalData: Fractal
 
 const _drawRoots = (context: CanvasRenderingContext2D, fractalData: FractalData) => {
     const { roots, zoom, center } = fractalData;
+    const _transform = invert(transformMany(toCanvasCenter(), canvasToUnitTransform(zoom, center)));
     for (const root of roots.roots()) {
-        const x = 400 * (1 + ((root.re + center[0]) * Math.pow(2, zoom)) / 1.5);
-        const y = 400 * (1 + ((root.im + center[1]) * Math.pow(2, zoom)) / 1.5);
+        const { x, y } = applyTransforms(root.re, root.im, _transform);
 
         context.strokeStyle = 'black';
         context.beginPath();

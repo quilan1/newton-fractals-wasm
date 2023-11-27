@@ -3,15 +3,18 @@ import styles from './page.module.css';
 import { Canvas } from './(util)/canvas';
 import { useValue } from './(util)/valued';
 import { useFractalDraw } from './(newton)/render-loop';
-import { getNewtonAsync, getNewtonSync, isValidFormula, wasmMemoryUsage } from './(newton)/newton-interface';
+import { isValidFormula, wasmMemoryUsage } from './(newton)/newton-interface';
 import { ChangeEvent, WheelEvent, MouseEvent, useEffect, useRef } from 'react';
 import { useDeferredFnExec } from './(util)/deferred-fn';
 import { classNames } from './(util)/util';
+import { Point, applyTransforms, } from './(util)/transform';
+import { canvasToUnitTransform, toCanvasCenter as toCanvasCenterOrigin } from './(newton)/(wrapper)/transforms';
+import { getNewtonAsync, getNewtonSync } from './(newton)/(wrapper)/consts';
 
 export default function Home() {
     const props = useFractals();
-    const { onChangeFormula, onChangeDropoff, onWheel, onMouseMove } = useOnChanges(props);
-    const { drawFn, isRendering, formula, dropoff, render } = props;
+    const { onChangeFormula, onChangeDropoff, onWheel, onMouseMove, onMouseLeave } = useOnChanges(props);
+    const { drawFn, isRendering, formula, dropoff, render, curPoint } = props;
     // _useLogMemory();
 
     const renderStyle = isRendering.value ? styles.isRendering : styles.notRendering;
@@ -38,13 +41,22 @@ export default function Home() {
                 </div>
                 <div><button onClick={render}>Render</button></div>
                 <div className={styles.status}>
+                    <label>{curPoint.value}</label>
                     <div className={styles.frameRate}>
                         {isRendering.value && <label>Rendering...</label>}
                         <div className={renderStyle} />
                     </div>
                 </div>
             </div>
-            <Canvas drawFn={drawFn} className={styles.fractal} onWheel={onWheel} onMouseMove={onMouseMove} width={800} height={800} />
+            <Canvas
+                drawFn={drawFn}
+                className={styles.fractal}
+                onWheel={onWheel}
+                onMouseMove={onMouseMove}
+                onMouseLeave={onMouseLeave}
+                width={800}
+                height={800}
+            />
         </main>
     )
 }
@@ -54,10 +66,11 @@ const useFractals = () => {
     useEffect(() => { console.clear(); void getNewtonAsync().then(() => { renderFn() }); }, []);
     const { drawFn, startRender, onDone } = useFractalDraw();
     const formula = useValue(defaultPolynomials[0]);
+    const curPoint = useValue("");
     const dropoff = useValue(1.0);
     const isRendering = useValue(false);
     const zoom = useRef(0.0);
-    const center = useRef<[number, number]>([0, 0]);
+    const center = useRef<Point>({ x: 0, y: 0 });
 
     // void onDone.then(_duration => { console.log('Rendered:', _duration); isRendering.value = false; });
     void onDone.then(_duration => { isRendering.value = false; });
@@ -70,17 +83,18 @@ const useFractals = () => {
     const render = useDeferredFnExec(0.2, renderFn);
     const renderNow: () => void = renderFn;
 
-    return { drawFn, isRendering, render, renderNow, formula, dropoff, zoom, center };
+    return { drawFn, isRendering, render, renderNow, formula, curPoint, dropoff, zoom, center };
 }
 
 const useOnChanges = (props: ReturnType<typeof useFractals>) => {
-    const { formula, dropoff, isRendering, zoom, center, render, renderNow } = props;
+    const { formula, dropoff, isRendering, zoom, center, render, renderNow, curPoint } = props;
 
     const onChangeFormula = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
         formula.value = e.target.value;
+        curPoint.value = "";
         zoom.current = 0.0;
-        center.current[0] = 0;
-        center.current[1] = 0;
+        center.current.x = 0;
+        center.current.y = 0;
         render();
     };
 
@@ -92,30 +106,32 @@ const useOnChanges = (props: ReturnType<typeof useFractals>) => {
     const onWheel = (e: WheelEvent<HTMLCanvasElement>) => {
         const zoomAdjust = -e.deltaY / 1000;
         zoom.current += zoomAdjust;
+        curPoint.value = "";
         render();
     }
 
-    const prevData = useRef({ mouseDown: false });
     const onMouseMove = (e: MouseEvent<HTMLCanvasElement>) => {
         e.preventDefault();
-        if ((e.buttons & 1) == 0) {
-            prevData.current.mouseDown = false;
-            return;
-        }
 
         const newton = getNewtonSync();
         if (!newton) return;
 
-        const unitsPerPixelBase = 2 * newton.complexWindow() / newton.canvasSize();
-        const unitsPerPixel = unitsPerPixelBase * Math.pow(2, -zoom.current);
+        const _transform = canvasToUnitTransform(zoom.current, center.current);
+        const curPt = applyTransforms(e.nativeEvent.offsetX, e.nativeEvent.offsetY, toCanvasCenterOrigin(), _transform);
+        curPoint.value = `${curPt.x.toFixed(5)},${curPt.y.toFixed(5)}`;
 
-        center.current[0] += e.movementX * unitsPerPixel;
-        center.current[1] += e.movementY * unitsPerPixel;
+        if ((e.buttons & 1) == 0) return;
+
+        center.current = applyTransforms(-e.movementX, -e.movementY, _transform);
         isRendering.value = false;
         renderNow();
     }
 
-    return { onChangeFormula, onChangeDropoff, onWheel, onMouseMove };
+    const onMouseLeave = (_e: MouseEvent<HTMLCanvasElement>) => {
+        curPoint.value = "";
+    }
+
+    return { onChangeFormula, onChangeDropoff, onWheel, onMouseMove, onMouseLeave };
 }
 
 const _useLogMemory = () => {
@@ -135,22 +151,25 @@ const lerp = (v: number, a: number, b: number) => a + v * (b - a);
 
 const defaultPolynomials = [
     'z^13 - 3*z^6 + z - 1',
+    // a=1, b=-13.8     z^5 + a*z^3 + b*z^2 - 5*a*z - 9*z + 3*b
+    '5*z^5 + 5*z^3 - 69*z^2 - 70*z - 207',
     'z^5 + 3z^3 + z + 3',
     '2z^11 - 2z^7 + 4z^6 + 4z^5 - 4z^4 - 3z - 2',
-    '-2z^10 + 3z^8 + z^6 + z^4 + 4z^2 + 5z + 4',
+    '1-2z^10 + 3z^8 + z^6 + z^4 + 4z^2 + 5z + 4',
     'z^10 + z^8 - 2z^2 + 1',
-    '-3z^10 - 4z^4 + z^2 - 2z - 4',
-    '-2z^6 - 3z^3 - z + 5',
-    '-z^9 + 4z^5 - 4z',
+    '1-3z^10 - 4z^4 + z^2 - 2z - 4',
+    '1-2z^6 - 3z^3 - z + 5',
+    '1-z^9 + 4z^5 - 4z',
     'z^7 - 4z^2 + 2z - 3',
     'z^4 - 3z^2 - 4',
     'z^4 - 3z^2 + 3',
     'z^4 + 3z^2 + 3',
 
+    '3*z^5 - 10*z^3 + 23*z',
     'z^4 - 6z^2 - 11',
     'z^4 + 6z^2 - 11',
-    '-z^4 + 6z^2 - 11',
-    '-z^4 - 6z^2 - 11',
+    '1-z^4 + 6z^2 - 11',
+    '1-z^4 - 6z^2 - 11',
 
     'z^3 - 2z + 2',
 
