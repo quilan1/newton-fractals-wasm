@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/prefer-for-of */
 import { OklchColor, PixelDataBuffer, Polynomial, Roots } from "@/pkg/newton_wasm";
-import { calculateRow, newImagePixelDataBuffer, newPolynomial, newRoots, renderRow } from "./newton-interface";
 import { RenderData } from "./render-loop";
 import { Point, applyTransforms, invert, transformMany } from "../(util)/transform";
 import { canvasToUnitTransform, toCanvasCenter } from "./(wrapper)/transforms";
+import { newPolynomial, newRoots } from "./(wrapper)/structs";
+import { calculateRow, newImagePixelDataBuffer, renderRow } from "./(wrapper)/rendering";
 
 export interface FractalData {
     fz: Polynomial,
@@ -15,15 +16,20 @@ export interface FractalData {
     center: Point,
 }
 
-export const newFractalData = (formula: string, dropoff: number, zoom: number, center: Point): FractalData => {
+export const newFractalData = (formula: string, dropoff: number, zoom: number, center: Point): FractalData | undefined => {
     const fz = newPolynomial(formula);
+    if (!fz) return undefined;
+
     const roots = newRoots(fz);
+    if (!roots) { fz.free(); return undefined; }
+
     const colors = roots.colors();
     // console.log("Colors:", colors.map(c => ({ c: c.c.toFixed(2), h: c.h.toFixed(2) })));
     // console.log("Roots", roots.roots().map(c => { const r = { re: c.re.toFixed(2), im: c.im.toFixed(2) }; c.free(); return r; }));
     const _colors = spreadColors(colors);
     roots.set_colors(_colors);
     const pdb = newImagePixelDataBuffer();
+
     return { fz, roots, pdb, dropoff, zoom, center }
 }
 

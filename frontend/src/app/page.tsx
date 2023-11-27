@@ -3,13 +3,13 @@ import styles from './page.module.css';
 import { Canvas } from './(util)/canvas';
 import { useValue } from './(util)/valued';
 import { useFractalDraw } from './(newton)/render-loop';
-import { isValidFormula, wasmMemoryUsage } from './(newton)/newton-interface';
 import { ChangeEvent, WheelEvent, MouseEvent, useEffect, useRef } from 'react';
 import { useDeferredFnExec } from './(util)/deferred-fn';
 import { classNames } from './(util)/util';
 import { Point, applyTransforms, } from './(util)/transform';
 import { canvasToUnitTransform, toCanvasCenter as toCanvasCenterOrigin } from './(newton)/(wrapper)/transforms';
 import { getNewtonAsync, getNewtonSync } from './(newton)/(wrapper)/consts';
+import { isValidFormula, wasmMemoryUsage } from './(newton)/(wrapper)/util';
 
 export default function Home() {
     const props = useFractals();
@@ -95,7 +95,10 @@ const useOnChanges = (props: ReturnType<typeof useFractals>) => {
         zoom.current = 0.0;
         center.current.x = 0;
         center.current.y = 0;
-        render();
+
+        if (isValidFormula(formula.value)) {
+            render();
+        }
     };
 
     const onChangeDropoff = (e: ChangeEvent<HTMLInputElement>) => {
@@ -150,32 +153,35 @@ const _useLogMemory = () => {
 const lerp = (v: number, a: number, b: number) => a + v * (b - a);
 
 const defaultPolynomials = [
-    'z^13 - 3*z^6 + z - 1',
     // a=1, b=-13.8     z^5 + a*z^3 + b*z^2 - 5*a*z - 9*z + 3*b
-    '5*z^5 + 5*z^3 - 69*z^2 - 70*z - 207',
+    '5z^5 + 5z^3 - 69z^2 - 70z - 207',
+
+    'z^13 - 3z^6 + z - 1',
     'z^5 + 3z^3 + z + 3',
     '2z^11 - 2z^7 + 4z^6 + 4z^5 - 4z^4 - 3z - 2',
-    '1-2z^10 + 3z^8 + z^6 + z^4 + 4z^2 + 5z + 4',
+    '-2z^10 + 3z^8 + z^6 + z^4 + 4z^2 + 5z + 5',
     'z^10 + z^8 - 2z^2 + 1',
-    '1-3z^10 - 4z^4 + z^2 - 2z - 4',
-    '1-2z^6 - 3z^3 - z + 5',
-    '1-z^9 + 4z^5 - 4z',
+    '-3z^10 - 4z^4 + z^2 - 2z - 3',
+    '-2z^6 - 3z^3 - z + 6',
+    '-z^9 + 4z^5 - 4z + 1',
     'z^7 - 4z^2 + 2z - 3',
     'z^4 - 3z^2 - 4',
     'z^4 - 3z^2 + 3',
     'z^4 + 3z^2 + 3',
 
-    '3*z^5 - 10*z^3 + 23*z',
+    '3z^5 - 10z^3 + 23z',
     'z^4 - 6z^2 - 11',
     'z^4 + 6z^2 - 11',
-    '1-z^4 + 6z^2 - 11',
-    '1-z^4 - 6z^2 - 11',
+    '-z^4 + 6z^2 - 10',
+    '-z^4 - 6z^2 - 10',
 
     'z^3 - 2z + 2',
 
     '2z^4 + z^3 + 4z + 4',
-    'z^4 + 3z+3',
+    'z^4 + 3z + 3',
     'z^4 - 4z^3 - 9z+27',
 
-    'z^6 - 4*z^4 + 4*z^2 - 4',
+    'z^6 - 4z^4 + 4z^2 - 4',
+    'z^6 - 4z^4 + 6z^2 + 3',
+    'z^6 - 4z^4 + 6z^2 + 4',
 ];

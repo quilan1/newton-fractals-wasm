@@ -1,4 +1,5 @@
-import { Newton, Wasm } from "../newton-interface";
+export type Newton = typeof import('@/pkg/newton_wasm');
+export type Wasm = typeof import('@/pkg/newton_wasm_bg.wasm');
 
 ///////////////////////////////////////////////////////////////////
 

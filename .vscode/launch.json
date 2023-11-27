@@ -4,42 +4,47 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        /*
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'newtons-method'",
+            "name": "Debug executable 'newton-core'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=newtons-method",
-                    "--package=newtons-method"
+                    "--bin=newton_core",
+                    "--package=newton-core",
+                    "--manifest-path=${workspaceFolder}/crates/newton_core/Cargo.toml"
                 ],
                 "filter": {
-                    "name": "newtons-method",
+                    "name": "newton-core",
                     "kind": "bin"
                 }
             },
-            "args": ["saved"],
-            "cwd": "${workspaceFolder}"
+            "args": [
+                "saved"
+            ],
+            "cwd": "${workspaceFolder}/crates"
         },
+        */
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'newtons-method'",
+            "name": "Debug unit tests in executable 'newton-core'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=newtons-method",
-                    "--package=newtons-method"
+                    "--package=newton-core",
+                    "--manifest-path=${workspaceFolder}/crates/newton_core/Cargo.toml"
                 ],
                 "filter": {
-                    "name": "newtons-method",
-                    "kind": "bin"
+                    "name": "newton-core",
+                    "kind": "lib"
                 }
             },
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}/crates"
         }
     ]
 }

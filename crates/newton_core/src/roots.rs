@@ -25,6 +25,10 @@ pub struct Roots {
 
 impl Roots {
     pub fn new<T: TPolynomial>(fz: &Polynomial<T>) -> Option<Self> {
+        if fz.is_constant() {
+            return None;
+        }
+
         let roots = roots_of(fz);
         if roots.is_empty() {
             return None;

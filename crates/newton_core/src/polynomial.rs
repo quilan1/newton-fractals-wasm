@@ -1,6 +1,5 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use num_complex::{Complex32, ComplexFloat};
-use regex::Regex;
 
 use crate::polynomial_term::PolynomialTerm;
 
@@ -93,6 +92,10 @@ impl<T: TPolynomial> Polynomial<T> {
             t.coefficient /= coef;
         }
     }
+
+    pub fn is_constant(&self) -> bool {
+        self.derivative.is_empty()
+    }
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -103,15 +106,53 @@ impl<T: TPolynomial + Parseable> Polynomial<T> {
         let mut function = Vec::new();
         let mut derivative = Vec::new();
 
-        let function_str = function_str.replace(' ', "");
-        let function_str = &format!("+{}", function_str);
-        let re = Regex::new(r"[+-]\d*\*?(z(\^\d+)?)?").unwrap();
-        for coef_power in re.find_iter(function_str) {
-            let cp = PolynomialTerm::parse(coef_power.as_str())?;
+        let mut function_str = function_str.replace([' ', '(', ')', '*'], "");
+        if function_str.starts_with('-') {
+            function_str = format!("0{function_str}");
+        };
+        let (plus, minus): (Vec<_>, Vec<_>) = function_str
+            .split('+')
+            .collect::<Vec<_>>()
+            .into_iter()
+            .map(|terms| {
+                terms
+                    .split('-')
+                    .filter(|t| !t.is_empty())
+                    .collect::<Vec<_>>()
+            })
+            .filter(|terms| !terms.is_empty())
+            .map(|terms| {
+                let (plus, minus) = terms.split_at(1);
+                (plus.to_vec(), minus.to_vec())
+            })
+            .unzip();
+
+        let plus = plus.into_iter().flatten().collect::<Vec<_>>();
+        let minus = minus.into_iter().flatten().collect::<Vec<_>>();
+
+        for term in plus {
+            let Some(cp) = PolynomialTerm::parse(term, 1.)? else {
+                continue;
+            };
+
             if let Some(derivative_cp) = cp.derivative() {
-                derivative.push(derivative_cp)
+                derivative.push(derivative_cp);
             }
             function.push(cp);
+        }
+
+        for term in minus {
+            let Some(cp) = PolynomialTerm::parse(term, -1.)? else {
+                continue;
+            };
+            if let Some(derivative_cp) = cp.derivative() {
+                derivative.push(derivative_cp);
+            }
+            function.push(cp);
+        }
+
+        if function.is_empty() {
+            bail!("Empty function");
         }
 
         Ok(Self {
@@ -156,6 +197,12 @@ impl<T: TPolynomial> From<Vec<(T, i32)>> for Polynomial<T> {
     }
 }
 
+impl<T: TPolynomial> From<Polynomial<T>> for Vec<(T, i32)> {
+    fn from(value: Polynomial<T>) -> Self {
+        value.function.iter().map(From::from).collect::<Vec<_>>()
+    }
+}
+
 ///////////////////////////////////////////////////////////////////
 
 impl<T: TPolynomial> From<&Polynomial<T>> for CPolynomial {
@@ -186,19 +233,42 @@ mod tests {
         let fz = FPolynomial::parse("z^5-z^2+3z^3-2z+5")?;
         assert_eq!(
             terms_to_vec(&fz.function),
-            vec![(1.0, 5), (-1.0, 2), (3.0, 3), (-2.0, 1), (5.0, 0)]
+            vec![(1.0, 5), (3.0, 3), (-1.0, 2), (-2.0, 1), (5.0, 0)]
         );
         assert_eq!(
             terms_to_vec(&fz.derivative),
-            vec![(5.0, 4), (-2.0, 1), (9.0, 2), (-2.0, 0)]
+            vec![(5.0, 4), (9.0, 2), (-2.0, 1), (-2.0, 0)]
         );
         Ok(())
     }
 
+    #[test]
+    fn test_leading_coefficient_negative() -> Result<()> {
+        let fz = FPolynomial::parse("-3z^10 - 4z^4 + z^2 - 2z - 4")?;
+        assert_eq!(
+            terms_to_vec(&fz.function),
+            vec![(-3., 10), (-4., 4), (1., 2), (-2., 1), (-4., 0)]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_empty_term() -> Result<()> {
+        let fz = FPolynomial::parse("2+")?;
+        assert_eq!(terms_to_vec(&fz.function), vec![(2., 0)]);
+        Ok(())
+    }
+
+    #[test]
+    fn test_empty() -> Result<()> {
+        let fz = FPolynomial::parse("");
+        assert!(fz.is_err());
+        Ok(())
+    }
+
     fn terms_to_vec(terms: &[PolynomialTerm<f32>]) -> Vec<(f32, i32)> {
+        let mut terms = terms.iter().map(Into::into).collect::<Vec<_>>();
+        terms.sort_by_key(|&(_, p)| -p);
         terms
-            .iter()
-            .map(|cp| (cp.coefficient, cp.power))
-            .collect::<Vec<_>>()
     }
 }

@@ -71,6 +71,8 @@ export const useFractalDraw = () => {
         if (getNewtonSync()) {
             freeFractalData(data.current.fractalData);
             data.current.fractalData = newFractalData(formula, dropoff, zoom, center);
+            if (!data.current.fractalData)
+                data.current.renderData.isRendering = false;
         }
     }, []);
 
