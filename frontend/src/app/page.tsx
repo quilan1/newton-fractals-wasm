@@ -18,7 +18,8 @@ export default function Home() {
     // _useLogMemory();
 
     const renderStyle = isRendering.value ? styles.isRendering : styles.notRendering;
-    const formulaStyle = classNames(styles, ['formula', !isValidFormula(formula.value) ? 'badFormula' : '']);
+    const _isValidFormula = isValidFormula(formula.value);
+    const formulaStyle = classNames(styles, ['formula', !_isValidFormula ? 'badFormula' : '']);
 
     return (
         <main className={styles.main}>
@@ -39,7 +40,7 @@ export default function Home() {
                         />
                     </div>
                 </div>
-                <div><button onClick={render}>Render</button></div>
+                <div><button onClick={render} disabled={!_isValidFormula}>Render</button></div>
                 <div className={styles.status}>
                     <label>{curPoint.value}</label>
                     <div className={styles.frameRate}>
@@ -76,6 +77,7 @@ const useFractals = () => {
     void onDone.then(_duration => { isRendering.value = false; });
 
     const renderFn = () => {
+        if (!isValidFormula(formula.value)) return;
         isRendering.value = true;
         const _dropoff = lerp(dropoff.value, 1.0, 0.15);
         startRender(formula.value, _dropoff, zoom.current, center.current);
@@ -95,10 +97,7 @@ const useOnChanges = (props: ReturnType<typeof useFractals>) => {
         zoom.current = 0.0;
         center.current.x = 0;
         center.current.y = 0;
-
-        if (isValidFormula(formula.value)) {
-            render();
-        }
+        render();
     };
 
     const onChangeDropoff = (e: ChangeEvent<HTMLInputElement>) => {
