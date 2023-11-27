@@ -1,21 +1,21 @@
 'use client';
 import styles from './page.module.css';
-import { Canvas } from './(util)/canvas';
-import { useValue } from './(util)/valued';
-import { useFractalDraw } from './(newton)/render-loop';
+import { AnimatedCanvas } from '../(util)/animated-canvas';
+import { useValue } from '../(util)/valued';
+import { useFractalDraw } from '../(newton)/render-loop';
 import { ChangeEvent, WheelEvent, MouseEvent, useEffect, useRef } from 'react';
-import { useDeferredFnExec } from './(util)/deferred-fn';
-import { classNames } from './(util)/util';
-import { Point, applyTransforms, } from './(util)/transform';
-import { canvasToUnitTransform, toCanvasCenter as toCanvasCenterOrigin } from './(newton)/(wrapper)/transforms';
-import { getNewtonAsync, getNewtonSync } from './(newton)/(wrapper)/consts';
-import { isValidFormula, wasmMemoryUsage } from './(newton)/(wrapper)/util';
-import { usePeriodicFn } from './(util)/periodic-fn';
+import { useDeferredFnExec } from '../(util)/deferred-fn';
+import { classNames } from '../(util)/util';
+import { Point, applyTransforms, } from '../(util)/transform';
+import { canvasToUnitTransform, toCanvasCenter as toCanvasCenterOrigin } from '../(newton)/(wrapper)/transforms';
+import { getNewtonAsync, getNewtonSync } from '../(newton)/(wrapper)/consts';
+import { isValidFormula, wasmMemoryUsage } from '../(newton)/(wrapper)/util';
+import { usePeriodicFn } from '../(util)/periodic-fn';
 
 export default function Home() {
     const props = useFractals();
     const { onChangeFormula, onChangeDropoff, onWheel, onMouseMove, onMouseLeave } = useOnChanges(props);
-    const { drawFn, isRendering, formula, dropoff, render, curPoint } = props;
+    const { drawFn, isRendering, formula, dropoff, curPoint } = props;
     const wasmMemoryUsage = useWasmMemoryUsage();
 
     const renderStyle = isRendering.value ? styles.isRendering : styles.notRendering;
@@ -42,7 +42,6 @@ export default function Home() {
                         />
                     </div>
                 </div>
-                <div><button onClick={render} disabled={!_isValidFormula}>Render</button></div>
                 <div className={styles.status}>
                     <label>{curPoint.value}&nbsp;</label>
                     <label>{wasmMemoryUsage.value}</label>
@@ -52,7 +51,7 @@ export default function Home() {
                     </div>
                 </div>
             </div>
-            <Canvas
+            <AnimatedCanvas
                 drawFn={drawFn}
                 className={styles.fractal}
                 onWheel={onWheel}

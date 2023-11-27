@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { CanvasDrawFn } from "../(util)/canvas";
+import { CanvasDrawFn } from "../(util)/animated-canvas";
 import { setterPromise } from "../(util)/util";
 import { FractalData, freeFractalData, newFractalData, postDraw, renderToCanvasRow } from "./render";
 import { Point } from "../(util)/transform";
