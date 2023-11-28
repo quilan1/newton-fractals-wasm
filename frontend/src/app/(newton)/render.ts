@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/prefer-for-of */
 import { OklchColor, PixelDataBuffer, Polynomial, Roots } from "@/pkg/newton_wasm";
 import { RenderData } from "./render-loop";
-import { Point, applyTransforms, invert, transformMany } from "../(util)/transform";
-import { canvasToUnitTransform, toCanvasCenter } from "./(wrapper)/transforms";
+import { Transform, applyTransforms, invert, transformMany } from "../(util)/transform";
+import { canvasToUnitTransform, toCanvasCenter } from "./(wrapper)/transform";
 import { newPolynomial, newRoots } from "./(wrapper)/structs";
 import { calculateRow, newImagePixelDataBuffer, renderRow } from "./(wrapper)/rendering";
 
@@ -11,12 +11,10 @@ export interface FractalData {
     roots: Roots,
     pdb: PixelDataBuffer,
     dropoff: number,
-    // transform: Transform,
-    zoom: number,
-    center: Point,
+    transform: Transform,
 }
 
-export const newFractalData = (formula: string, dropoff: number, zoom: number, center: Point): FractalData | undefined => {
+export const newFractalData = (formula: string, dropoff: number, transform: Transform): FractalData | undefined => {
     const fz = newPolynomial(formula);
     if (!fz) return undefined;
 
@@ -30,7 +28,7 @@ export const newFractalData = (formula: string, dropoff: number, zoom: number, c
     roots.set_colors(_colors);
     const pdb = newImagePixelDataBuffer();
 
-    return { fz, roots, pdb, dropoff, zoom, center }
+    return { fz, roots, pdb, dropoff, transform }
 }
 
 export const freeFractalData = (fractalData?: FractalData) => {
@@ -44,8 +42,8 @@ export const renderToCanvasRow = (
     context: CanvasRenderingContext2D, renderData: RenderData, fractalData: FractalData
 ) => {
     const { row, scale } = renderData;
-    const { fz, roots, pdb, dropoff, zoom, center } = fractalData;
-    const pdbRow = calculateRow(fz, roots, zoom, center, scale, row);
+    const { fz, roots, pdb, dropoff, transform } = fractalData;
+    const pdbRow = calculateRow(fz, roots, transform, scale, row);
     renderRow(context, roots, pdb, pdbRow, scale, row, dropoff);
     pdbRow.free();
 }
@@ -55,8 +53,8 @@ export const postDraw = (context: CanvasRenderingContext2D, fractalData: Fractal
 }
 
 const _drawRoots = (context: CanvasRenderingContext2D, fractalData: FractalData) => {
-    const { roots, zoom, center } = fractalData;
-    const _transform = invert(transformMany(toCanvasCenter(), canvasToUnitTransform(zoom, center)));
+    const { roots, transform } = fractalData;
+    const _transform = invert(transformMany(toCanvasCenter(), canvasToUnitTransform(transform)));
     for (const root of roots.roots()) {
         const { x, y } = applyTransforms(root.re, root.im, _transform);
 

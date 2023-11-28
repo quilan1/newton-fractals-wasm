@@ -38,16 +38,14 @@ pub fn calculate_row(
 }
 
 fn calculate_z_start(zoom: f32, row: usize, num_pixels: usize) -> (Complex32, f32) {
-    let zoom = 2.0f32.powf(-zoom);
     let upp_full = units_per_pixel_base();
     let upp_local = units_per_pixel_scaled(num_pixels);
     let upp_local = upp_local * zoom;
 
-    let scaled_window = complex_window() * zoom;
-    let z_im = -scaled_window + upp_full * (row as f32);
-    let z_re = -scaled_window;
+    let z_im = -complex_window() + upp_full * (row as f32);
+    let z_re = -complex_window();
 
-    (Complex32::new(z_re, z_im), upp_local)
+    (Complex32::new(z_re * zoom, z_im * zoom), upp_local)
 }
 
 #[wasm_bindgen(js_name = __renderRow)]

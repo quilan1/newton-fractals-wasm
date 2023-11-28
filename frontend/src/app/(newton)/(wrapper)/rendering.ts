@@ -1,10 +1,9 @@
 import { PixelDataBuffer, Polynomial, Roots } from "@/pkg/newton_wasm";
 import { getNewton } from "./consts";
-import { Point } from "@/app/(util)/transform";
+import { Transform } from "@/app/(util)/transform";
 
-export const calculateRow = (fz: Polynomial, roots: Roots, zoom: number, center: Point, renderScale: number, row: number): PixelDataBuffer => {
-    const affineTransform = { scale: zoom, translate: center };
-    return getNewton().__calculateRow(fz, roots, affineTransform, renderScale, row);
+export const calculateRow = (fz: Polynomial, roots: Roots, transform: Transform, renderScale: number, row: number): PixelDataBuffer => {
+    return getNewton().__calculateRow(fz, roots, transform, renderScale, row);
 }
 
 export const renderRow = (

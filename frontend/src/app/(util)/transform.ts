@@ -8,6 +8,10 @@ export interface Point {
     y: number,
 }
 
+export const transformIdent = (): Transform => {
+    return newTransform(1.0, 0.0, 0.0);
+}
+
 export const newTransform = (scale: number, x: number, y: number): Transform => {
     return { scale, translate: { x, y } }
 }

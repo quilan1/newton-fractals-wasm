@@ -2,7 +2,7 @@ import { useCallback, useRef } from "react";
 import { CanvasDrawFn } from "../(util)/animated-canvas";
 import { setterPromise } from "../(util)/util";
 import { FractalData, freeFractalData, newFractalData, postDraw, renderToCanvasRow } from "./render";
-import { Point } from "../(util)/transform";
+import { Transform } from "../(util)/transform";
 import { getNewtonSync } from "./(wrapper)/consts";
 
 interface RenderStateData {
@@ -61,15 +61,15 @@ const renderFn = (context: CanvasRenderingContext2D, data: RenderStateData) => {
     return { frameRate, numFrames };
 }
 
-export type RenderFn = (formula: string, dropoff: number, zoom: number, center: Point) => void;
+export type RenderFn = (formula: string, dropoff: number, transform: Transform) => void;
 
 export const useFractalDraw = () => {
     const data = useRef(newRenderStateData());
-    const startRender: RenderFn = useCallback((formula: string, dropoff: number, zoom: number, center: Point) => {
+    const startRender: RenderFn = useCallback((formula: string, dropoff: number, transform: Transform) => {
         data.current.renderData = newRenderData();
         if (getNewtonSync()) {
             freeFractalData(data.current.fractalData);
-            data.current.fractalData = newFractalData(formula, dropoff, zoom, center);
+            data.current.fractalData = newFractalData(formula, dropoff, transform);
             if (!data.current.fractalData)
                 data.current.renderData.isRendering = false;
         }
