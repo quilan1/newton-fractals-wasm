@@ -23,6 +23,8 @@ pub fn write_scaled_block<Out, In, TransIn, Trans, Write>(
         });
 }
 
+///////////////////////////////////////////////////////////////////
+
 #[cfg(test)]
 mod tests {
     use super::write_scaled_block;

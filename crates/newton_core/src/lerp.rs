@@ -1,5 +1,7 @@
 use num_complex::Complex32;
 
+///////////////////////////////////////////////////////////////////
+
 pub trait Lerp {
     /// Performan a linear interpolation. Transforms 0 to 1 into an A to B range.
     fn lerp(self, a: Self, b: Self) -> Self;
@@ -8,6 +10,8 @@ pub trait Lerp {
     /// Perform an inverse-linear-interpolation. Transforms an A to B range into 0 to 1.
     fn ilerp_clamped(self, a: Self, b: Self) -> Self;
 }
+
+///////////////////////////////////////////////////////////////////
 
 impl Lerp for f32 {
     fn lerp(self, a: Self, b: Self) -> Self {

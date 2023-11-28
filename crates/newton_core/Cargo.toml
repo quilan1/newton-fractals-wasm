@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.75"
+serde = { version = "1.0.192", features = ["derive"] }
 getrandom = { version = "0.2.11", features = ["js"] }
+anyhow = "1.0.75"
 log = "0.4.20"
 num-complex = "0.4.4"
 palette = "0.7.3"

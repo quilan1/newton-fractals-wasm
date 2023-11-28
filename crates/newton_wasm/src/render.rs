@@ -3,10 +3,16 @@ use num_complex::Complex32;
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    canvas_size, complex_window, pixel_data_buffer::PixelDataBuffer, polynomial::Polynomial,
-    roots::Roots, scale_row::write_scaled_block, transform::Transform, units_per_pixel_base,
-    units_per_pixel_scaled, TryFromJs,
+    canvas_size, complex_window,
+    js_imports::{JsTransform, JsTryInto, Transform},
+    pixel_data_buffer::PixelDataBuffer,
+    polynomial::Polynomial,
+    roots::Roots,
+    scale_row::write_scaled_block,
+    units_per_pixel_base, units_per_pixel_scaled,
 };
+
+///////////////////////////////////////////////////////////////////
 
 #[wasm_bindgen(js_name = __newImagePixelDataBuffer)]
 pub fn new_image_pixel_data_buffer() -> PixelDataBuffer {
@@ -18,14 +24,14 @@ pub fn new_image_pixel_data_buffer() -> PixelDataBuffer {
 pub fn calculate_row(
     fz: &Polynomial,
     roots: &Roots,
-    affine_transform: JsValue,
+    affine_transform: JsTransform,
     render_scale: usize,
     row: usize,
 ) -> Result<PixelDataBuffer, JsError> {
     let num_pixels = canvas_size() / render_scale;
     let mut pixel_data = vec![PixelData(0); num_pixels];
 
-    let affine_transform: Transform = affine_transform.try_from_js()?;
+    let affine_transform: Transform = affine_transform.js_try_into()?;
     let (z, units_per_pixel_scaled) = calculate_z_start(affine_transform.scale, row, num_pixels);
     newton_core::calculate_row(
         &fz.poly,

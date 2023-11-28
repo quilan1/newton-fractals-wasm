@@ -2,6 +2,8 @@ use palette::{IntoColor, Oklch, Srgba};
 
 use crate::{pixel_data::PixelDataDetail, Lerp, OklchColor};
 
+///////////////////////////////////////////////////////////////////
+
 pub fn pixel_color<P: Into<PixelDataDetail>>(
     pixel_data: P,
     roots: &[OklchColor],

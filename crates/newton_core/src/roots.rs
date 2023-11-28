@@ -2,6 +2,7 @@
 
 use num_complex::{Complex32, ComplexFloat};
 use rand::Rng;
+use serde::Deserialize;
 
 use crate::{
     polynomial::{CPolynomial, Polynomial, TPolynomial},
@@ -10,7 +11,7 @@ use crate::{
 
 ///////////////////////////////////////////////////////////////////
 
-#[derive(Clone)]
+#[derive(Deserialize, Clone)]
 pub struct OklchColor {
     pub h: f32,
     pub c: f32,

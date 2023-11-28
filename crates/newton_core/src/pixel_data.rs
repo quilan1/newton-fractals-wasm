@@ -6,6 +6,8 @@ pub struct PixelDataDetail {
     pub frac: f32,
 }
 
+///////////////////////////////////////////////////////////////////
+
 const fn mask(n: u32) -> u32 {
     (1 << n) - 1
 }

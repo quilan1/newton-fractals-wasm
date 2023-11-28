@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/prefer-for-of */
-import { OklchColor, PixelDataBuffer, Polynomial, Roots } from "@/pkg/newton_wasm";
+import { PixelDataBuffer, Polynomial, Roots } from "@/pkg/newton_wasm";
 import { RenderData } from "./render-loop";
 import { Transform, applyTransforms, invert, transformMany } from "../(util)/transform";
 import { canvasToUnitTransform, toCanvasCenter } from "./(wrapper)/transform";
-import { newPolynomial, newRoots } from "./(wrapper)/structs";
+import { OklchColor, newPolynomial, newRoots } from "./(wrapper)/structs";
 import { calculateRow, newImagePixelDataBuffer, renderRow } from "./(wrapper)/rendering";
 
 export interface FractalData {
@@ -71,8 +71,6 @@ const _drawRoots = (context: CanvasRenderingContext2D, fractalData: FractalData)
         context.beginPath();
         context.arc(x, y, 20, 0, 2 * Math.PI);
         context.stroke();
-
-        root.free();
     }
 }
 
@@ -84,7 +82,6 @@ const angleDelta = (a: number, b: number): number => {
 
 const spreadColors = (_colors: OklchColor[]) => {
     const colors = _colors.map(c => ({ h: c.h, c: c.c }));
-    _colors.forEach(c => { c.free(); });
 
     for (const color of colors) { color.h += color.c; }
     for (const color of colors) { color.h += 360; color.h %= 360; }
