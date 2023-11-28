@@ -71,6 +71,8 @@ const _drawRoots = (context: CanvasRenderingContext2D, fractalData: FractalData)
         context.beginPath();
         context.arc(x, y, 20, 0, 2 * Math.PI);
         context.stroke();
+
+        root.free();
     }
 }
 

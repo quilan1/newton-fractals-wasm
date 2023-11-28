@@ -48,6 +48,7 @@ export function useDeferredFn(timeout: number) {
         };
 
         timeoutId.current = setTimeout(timerFn, timeout);
+        return () => { clearTimeout(timeoutId.current); };
     }
 }
 

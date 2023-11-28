@@ -36,6 +36,13 @@ export const getWasmAsync = async (): Promise<Wasm> => {
 
 ///////////////////////////////////////////////////////////////////
 
+export const initWasmNewtonAsync = async () => {
+    await getNewtonAsync();
+    await getWasmAsync();
+}
+
+///////////////////////////////////////////////////////////////////
+
 let _canvasSize: number | undefined;
 
 export const getCanvasSize = () => {

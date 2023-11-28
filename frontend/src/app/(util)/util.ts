@@ -1,19 +1,19 @@
 import { useEffect } from 'react';
 
-type Setter<T> = (_value: T) => void;
-export const setterPromise = <T,>(): [Setter<T>, Promise<T>] => {
+type Setter<T> = (value: T | PromiseLike<T>) => void;
+export const setterPromise = <T>(): [Setter<T>, Promise<T>] => {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    let setter: Setter<T> = (_value: T) => { };
+    let setter: Setter<T> = (_value: T | PromiseLike<T>) => { };
     const promise = new Promise<T>(resolve => {
-        setter = (value: T) => { resolve(value) };
+        setter = (value: T | PromiseLike<T>) => { resolve(value) };
     });
 
     return [setter, promise];
 }
 
-export const useAsync = (fn: () => Promise<void>, req?: unknown[]) => {
+export const useAsyncOnce = (fn: () => Promise<void>) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { void fn(); }, [fn, ...req ?? []]);
+    useEffect(() => { void fn(); }, []);
 }
 
 export const classNames = (styles: Record<string, string>, classes: (string | undefined)[]): string => {

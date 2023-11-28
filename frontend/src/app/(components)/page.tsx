@@ -3,12 +3,12 @@ import styles from './page.module.css';
 import { AnimatedCanvas } from '../(util)/animated-canvas';
 import { useValue } from '../(util)/valued';
 import { useFractalDraw } from '../(newton)/render-loop';
-import { ChangeEvent, WheelEvent, MouseEvent, useEffect, useRef } from 'react';
+import { ChangeEvent, WheelEvent, MouseEvent, useRef } from 'react';
 import { useDeferredFnExec } from '../(util)/deferred-fn';
-import { classNames } from '../(util)/util';
+import { classNames, useAsyncOnce } from '../(util)/util';
 import { applyTransforms, transformIdent, } from '../(util)/transform';
 import { canvasToUnitTransform, toCanvasCenter as toCanvasCenterOrigin } from '../(newton)/(wrapper)/transform';
-import { getNewtonAsync, getNewtonSync } from '../(newton)/(wrapper)/consts';
+import { getNewtonSync, initWasmNewtonAsync } from '../(newton)/(wrapper)/consts';
 import { isValidFormula, wasmMemoryUsage } from '../(newton)/(wrapper)/util';
 import { usePeriodicFn } from '../(util)/periodic-fn';
 
@@ -65,8 +65,6 @@ export default function Home() {
 }
 
 const useFractals = () => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { console.clear(); void getNewtonAsync().then(() => { renderFn() }); }, []);
     const { drawFn, startRender, onDone } = useFractalDraw();
     const formula = useValue(defaultPolynomials[0]);
     const curPoint = useValue("");
@@ -77,16 +75,25 @@ const useFractals = () => {
     // void onDone.then(_duration => { console.log('Rendered:', _duration); isRendering.value = false; });
     void onDone.then(_duration => { isRendering.value = false; });
 
-    const renderFn = () => {
+    const renderNow = () => {
         if (!isValidFormula(formula.value)) return;
         isRendering.value = true;
         const _dropoff = lerp(dropoff.value, 1.0, 0.15);
         startRender(formula.value, _dropoff, transform.current);
     };
-    const render = useDeferredFnExec(0.2, renderFn);
-    const renderNow: () => void = renderFn;
+    const render = useDeferredFnExec(0.2, renderNow);
+
+    useInitializePage(renderNow);
 
     return { drawFn, isRendering, render, renderNow, formula, curPoint, dropoff, transform };
+}
+
+const useInitializePage = (fn: () => void) => {
+    useAsyncOnce(async () => {
+        console.clear();
+        await initWasmNewtonAsync();
+        fn();
+    });
 }
 
 const useOnChanges = (props: ReturnType<typeof useFractals>) => {

@@ -70,15 +70,15 @@ export const useFractalDraw = () => {
         if (getNewtonSync()) {
             freeFractalData(data.current.fractalData);
             data.current.fractalData = newFractalData(formula, dropoff, transform);
-            if (!data.current.fractalData)
-                data.current.renderData.isRendering = false;
         }
+        if (!data.current.fractalData)
+            data.current.renderData.isRendering = false;
     }, []);
 
     const [setDone, onDone] = setterPromise<number>();
 
-    const drawFn = useCallback<CanvasDrawFn>((context: CanvasRenderingContext2D | null) => {
-        if (context == null || !data.current.renderData.isRendering || !getNewtonSync()) return;
+    const drawFn = useCallback<CanvasDrawFn>((context: CanvasRenderingContext2D) => {
+        if (!data.current.renderData.isRendering || !getNewtonSync()) return;
 
         const result = renderFn(context, data.current);
         if (!result) {
