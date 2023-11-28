@@ -4,13 +4,13 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND: &'static str = r#"
 
-import { Complex, OklchColor, Transform } from '@/app/(newton)/(wrapper)/structs';
+import { Complex, OklchColor, Transform } from '@/app/(wasm-wrapper)/structs';
 
 type OklchColorArray = OklchColor[];
 
 "#;
 
-#[wasm_bindgen(module = "@/app/(newton)/(wrapper)/structs")]
+#[wasm_bindgen(module = "@/app/(wasm-wrapper)/structs")]
 extern "C" {
     #[wasm_bindgen(typescript_type = "Complex")]
     pub type JsComplex;

@@ -3,7 +3,7 @@ import { CanvasDrawFn } from "../(util)/animated-canvas";
 import { setterPromise } from "../(util)/util";
 import { FractalData, freeFractalData, newFractalData, postDraw, renderToCanvasRow } from "./render";
 import { Transform } from "../(util)/transform";
-import { getNewtonSync } from "./(wrapper)/consts";
+import { getNewtonSync } from "../(wasm-wrapper)/consts";
 
 interface RenderStateData {
     renderData: RenderData,

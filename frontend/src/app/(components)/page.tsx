@@ -2,14 +2,14 @@
 import styles from './page.module.css';
 import { AnimatedCanvas } from '../(util)/animated-canvas';
 import { useValue } from '../(util)/valued';
-import { useFractalDraw } from '../(newton)/render-loop';
+import { useFractalDraw } from '../(render)/render-loop';
 import { ChangeEvent, WheelEvent, MouseEvent, useRef } from 'react';
 import { useDeferredFnExec } from '../(util)/deferred-fn';
 import { classNames, useAsyncOnce } from '../(util)/util';
 import { applyTransforms, transformIdent, } from '../(util)/transform';
-import { canvasToUnitTransform, toCanvasCenter as toCanvasCenterOrigin } from '../(newton)/(wrapper)/transform';
-import { getNewtonSync, initWasmNewtonAsync } from '../(newton)/(wrapper)/consts';
-import { isValidFormula, wasmMemoryUsage } from '../(newton)/(wrapper)/util';
+import { canvasToUnitTransform, toCanvasCenter as toCanvasCenterOrigin } from '../(wasm-wrapper)/transform';
+import { getNewtonSync, initWasmNewtonAsync } from '../(wasm-wrapper)/consts';
+import { isValidFormula, wasmMemoryUsage } from '../(wasm-wrapper)/util';
 import { usePeriodicFn } from '../(util)/periodic-fn';
 
 export default function Home() {

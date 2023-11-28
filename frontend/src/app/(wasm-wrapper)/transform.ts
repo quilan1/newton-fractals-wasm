@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Transform, invert, translate } from "../../(util)/transform";
+import { Transform, invert, translate } from "../(util)/transform";
 import { getCanvasSize, getUnitsPerPixel } from "./consts";
 
 export const unitToPixelTransform = (transform: Transform) => {

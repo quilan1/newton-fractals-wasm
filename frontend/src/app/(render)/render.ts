@@ -2,9 +2,9 @@
 import { PixelDataBuffer, Polynomial, Roots } from "@/pkg/newton_wasm";
 import { RenderData } from "./render-loop";
 import { Transform, applyTransforms, invert, transformMany } from "../(util)/transform";
-import { canvasToUnitTransform, toCanvasCenter } from "./(wrapper)/transform";
-import { OklchColor, newPolynomial, newRoots } from "./(wrapper)/structs";
-import { calculateRow, newImagePixelDataBuffer, renderRow } from "./(wrapper)/rendering";
+import { canvasToUnitTransform, toCanvasCenter } from "../(wasm-wrapper)/transform";
+import { OklchColor, newPolynomial, newRoots } from "../(wasm-wrapper)/structs";
+import { calculateRow, newImagePixelDataBuffer, renderRow } from "../(wasm-wrapper)/rendering";
 
 export interface FractalData {
     fz: Polynomial,
