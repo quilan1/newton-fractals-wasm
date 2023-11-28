@@ -3,7 +3,7 @@ use num_complex::Complex32;
 use crate::{
     pixel_data::PixelData,
     polynomial::{Polynomial, TPolynomial},
-    Lerp, CANVAS_SIZE, COMPLEX_WINDOW, LOG_EPSILON, MAX_NEWTON_COUNT,
+    Lerp, LOG_EPSILON, MAX_NEWTON_COUNT,
 };
 
 ///////////////////////////////////////////////////////////////////
@@ -11,32 +11,16 @@ use crate::{
 pub fn calculate_row<T: TPolynomial>(
     fz: &Polynomial<T>,
     roots: &[Complex32],
-    zoom: f32,
-    center: Complex32,
-    row: usize,
+    mut z: Complex32,
+    units_per_pixel: f32,
     pixel_data: &mut [PixelData],
 ) {
-    let zoom = 2.0f32.powf(-zoom);
-    let z_im_minmax = COMPLEX_WINDOW * zoom;
-
-    let z_im = (row as f32 / CANVAS_SIZE as f32).lerp(-z_im_minmax, z_im_minmax);
-    let delta_re = 2.0 * z_im_minmax / pixel_data.len() as f32;
-    let mut z_re = -z_im_minmax;
-
     pixel_data.iter_mut().for_each(|pixel| {
-        *pixel = calculate_pixel(fz, roots, Complex32::new(z_re, z_im) + center);
-        z_re += delta_re;
+        let (z_final, frac) = newtons_method(fz, z);
+        let root_index = nearest_root(z_final, roots);
+        *pixel = (root_index, frac).into();
+        z.re += units_per_pixel;
     });
-}
-
-fn calculate_pixel<T: TPolynomial>(
-    fz: &Polynomial<T>,
-    roots: &[Complex32],
-    z: Complex32,
-) -> PixelData {
-    let (z, frac) = newtons_method(fz, z);
-    let root_index = nearest_root(z, roots);
-    (root_index, frac).into()
 }
 
 // Calls Newton's method: z := z - f(z) / f'(z)

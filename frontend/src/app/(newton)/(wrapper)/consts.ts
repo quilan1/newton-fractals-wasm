@@ -40,7 +40,7 @@ let _canvasSize: number | undefined;
 
 export const getCanvasSize = () => {
     if (_canvasSize !== undefined) return _canvasSize;
-    _canvasSize = getNewton().canvasSize();
+    _canvasSize = getNewton().__canvasSize();
     return _canvasSize;
 }
 
@@ -48,6 +48,6 @@ let _unitsPerPixel: number | undefined;
 
 export const getUnitsPerPixel = () => {
     if (_unitsPerPixel !== undefined) return _unitsPerPixel;
-    _unitsPerPixel = getNewton().unitsPerPixel();
+    _unitsPerPixel = getNewton().__unitsPerPixelBase();
     return _unitsPerPixel;
 }

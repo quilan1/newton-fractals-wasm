@@ -16,19 +16,23 @@ pub fn run() {
     console_log::init().expect("Error intializing log");
 }
 
-#[wasm_bindgen(js_name = complexWindow)]
+#[wasm_bindgen(js_name = __complexWindow)]
 pub fn complex_window() -> f32 {
     COMPLEX_WINDOW
 }
 
-#[wasm_bindgen(js_name = canvasSize)]
+#[wasm_bindgen(js_name = __canvasSize)]
 pub fn canvas_size() -> usize {
     CANVAS_SIZE
 }
 
-#[wasm_bindgen(js_name = unitsPerPixel)]
-pub fn units_per_pixel() -> f32 {
-    2.0 * COMPLEX_WINDOW / CANVAS_SIZE as f32
+#[wasm_bindgen(js_name = __unitsPerPixelBase)]
+pub fn units_per_pixel_base() -> f32 {
+    units_per_pixel_scaled(CANVAS_SIZE)
+}
+
+pub fn units_per_pixel_scaled(num_pixels: usize) -> f32 {
+    2.0 * COMPLEX_WINDOW / num_pixels as f32
 }
 
 pub trait ToJsValue {
