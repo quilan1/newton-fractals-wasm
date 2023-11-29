@@ -144,7 +144,7 @@ const useOnChanges = (props: ReturnType<typeof useFractals>) => {
     return { onChangeFormula, onChangeDropoff, onWheel, onMouseMove, onMouseLeave };
 }
 
-const useWasmMemoryUsage = (msTimeout = 1000) => {
+const useWasmMemoryUsage = (msTimeout = 100) => {
     const memoryUsage = useValue("");
     usePeriodicFn(msTimeout, () => {
         const memoryUsageBytes = wasmMemoryUsage();

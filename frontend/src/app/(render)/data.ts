@@ -6,16 +6,31 @@ import { newImagePixelDataBuffer } from "../(wasm-wrapper)/rendering";
 
 ///////////////////////////////////////////////////////////////////
 
+export enum RenderState {
+    RENDER_PASS,
+    DONE,
+}
+
+export type RenderPassFn = (data: RenderStateData, context: CanvasRenderingContext2D) => void;
 export interface RenderStateData {
-    renderData: RenderData,
+    prePassFn: RenderPassFn,
+    passFn: RenderPassFn,
+    postPassFn: RenderPassFn,
+
+    stateData: StateData,
+    renderData?: RenderData,
     fractalData?: FractalData,
 }
 
-export interface RenderData {
+export interface StateData {
+    curState: RenderState,
     isRendering: boolean,
+}
+
+export interface RenderData {
     startTime: number,
     row: number,
-    scale: number,
+    scaleFactor: number,
 }
 
 export interface FractalData {
@@ -28,17 +43,18 @@ export interface FractalData {
 
 ///////////////////////////////////////////////////////////////////
 
-export const newRenderStateData = (): RenderStateData => {
-    const renderData = newRenderData();
-    renderData.isRendering = false;
-    return { renderData };
+export const isRenderStateFinishedRendering = (data: RenderStateData): boolean => {
+    return !data.stateData.isRendering
 }
 
-export const newRenderData = () => ({
-    isRendering: true,
+export const setRenderStateFinishedRendering = (data: RenderStateData) => {
+    data.stateData.isRendering = false;
+}
+
+export const newRenderData = (): RenderData => ({
     startTime: Date.now(),
     row: 0,
-    scale: 32
+    scaleFactor: 5
 });
 
 export const newFractalData = (formula: string, dropoff: number, transform: Transform): FractalData | undefined => {
@@ -64,4 +80,3 @@ export const freeFractalData = (fractalData?: FractalData) => {
     fractalData.roots.free();
     fractalData.pdb.free();
 }
-

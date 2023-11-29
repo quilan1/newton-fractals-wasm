@@ -2,26 +2,27 @@ import { applyTransforms, invert, transformMany } from "../(util)/transform";
 import { canvasToUnitTransform, toCanvasCenter } from "../(wasm-wrapper)/transform";
 import { OklchColor, } from "../(wasm-wrapper)/structs";
 import { calculateRow, renderRow } from "../(wasm-wrapper)/rendering";
-import { FractalData, RenderStateData } from "./data";
+import { RenderStateData } from "./data";
+import assert from "assert";
 
-export const renderToCanvasRow = (
-    context: CanvasRenderingContext2D, data: RenderStateData
-) => {
-    if (!data.fractalData) return;
+export const renderToCanvasRow = (data: RenderStateData, context: CanvasRenderingContext2D) => {
+    assert(!!data.renderData && !!data.fractalData);
 
-    const { row, scale } = data.renderData;
+    const { row, scaleFactor } = data.renderData;
     const { fz, roots, pdb, dropoff, transform } = data.fractalData;
-    const pdbRow = calculateRow(fz, roots, transform, scale, row);
-    renderRow(context, roots, pdb, pdbRow, scale, row, dropoff);
+    const pdbRow = calculateRow(fz, roots, transform, 1 << scaleFactor, row);
+    renderRow(context, roots, pdb, pdbRow, 1 << scaleFactor, row, dropoff);
     pdbRow.free();
 }
 
-export const postDraw = (context: CanvasRenderingContext2D, fractalData: FractalData) => {
-    _drawRoots(context, fractalData);
+export const postDraw = (data: RenderStateData, context: CanvasRenderingContext2D) => {
+    _drawRoots(data, context);
 }
 
-const _drawRoots = (context: CanvasRenderingContext2D, fractalData: FractalData) => {
-    const { roots, transform } = fractalData;
+const _drawRoots = (data: RenderStateData, context: CanvasRenderingContext2D) => {
+    if (!data.fractalData) return;
+
+    const { roots, transform } = data.fractalData;
     const _transform = invert(transformMany(toCanvasCenter(), canvasToUnitTransform(transform)));
     for (const root of roots.roots()) {
         const { x, y } = applyTransforms(root.re, root.im, _transform);
