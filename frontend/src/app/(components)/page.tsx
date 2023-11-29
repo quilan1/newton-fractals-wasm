@@ -2,7 +2,7 @@
 import styles from './page.module.css';
 import { AnimatedCanvas } from '../(util)/animated-canvas';
 import { useValue } from '../(util)/valued';
-import { useFractalDraw } from '../(render)/render-loop';
+import { useFractalDraw } from '../(render)/state-machine';
 import { ChangeEvent, WheelEvent, MouseEvent, useRef } from 'react';
 import { useDeferredFnExec } from '../(util)/deferred-fn';
 import { classNames, useAsyncOnce } from '../(util)/util';

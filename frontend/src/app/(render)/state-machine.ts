@@ -1,34 +1,10 @@
 import { useCallback, useRef } from "react";
 import { CanvasDrawFn } from "../(util)/animated-canvas";
 import { setterPromise } from "../(util)/util";
-import { FractalData, freeFractalData, newFractalData, postDraw, renderToCanvasRow } from "./render";
+import { postDraw, renderToCanvasRow } from "./render";
 import { Transform } from "../(util)/transform";
 import { getNewtonSync } from "../(wasm-wrapper)/consts";
-
-interface RenderStateData {
-    renderData: RenderData,
-    fractalData?: FractalData,
-}
-
-export interface RenderData {
-    isRendering: boolean,
-    startTime: number,
-    row: number,
-    scale: number,
-}
-
-const newRenderStateData = (): RenderStateData => {
-    const renderData = newRenderData();
-    renderData.isRendering = false;
-    return { renderData };
-}
-
-const newRenderData = () => ({
-    isRendering: true,
-    startTime: Date.now(),
-    row: 0,
-    scale: 32
-});
+import { RenderStateData, freeFractalData, newFractalData, newRenderData, newRenderStateData } from "./data";
 
 const renderFn = (context: CanvasRenderingContext2D, data: RenderStateData) => {
     const desiredFrameRate = 60;
@@ -51,7 +27,7 @@ const renderFn = (context: CanvasRenderingContext2D, data: RenderStateData) => {
     const start = Date.now();
     let numFrames = 0;
     while (numFrames == 0 || (Date.now() - start < msPerFrame && data.renderData.row < context.canvas.height)) {
-        renderToCanvasRow(context, data.renderData, data.fractalData);
+        renderToCanvasRow(context, data);
         data.renderData.row += data.renderData.scale;
         numFrames += 1;
     }
