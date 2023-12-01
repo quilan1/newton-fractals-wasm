@@ -1,5 +1,8 @@
 // @color-bg-body: #222;
 @color-bg-content: #444;
+@color-bg-settings: #BBB;
+@color-bg-settings-unselected: #888;
+@color-bg-input-unselected: #888;
 // @color-bg-header-selected: @color-bg-content;
 // @color-bg-header-not-selected: #888;
 // @color-bg-input: #AAA;
@@ -11,6 +14,13 @@
 @color-fg-label: #CCC;
 // @color-fg-divider: #444;
 // @color-fg-divider-border: #888;
+
+@settings-width-min: 15rem;
+@settings-width-max: 25rem;
+@canvas-min: 19rem;
+@canvas-max: 50rem;
+@media-width-full: ~'(max-width: 102rem)'; // 50 + 2*25 + 4*0.5
+@media-width-small: ~'(max-width: 34rem)'; // 19 + 15 + 3*0.5
 
 .dark-content() {
     background-color: @color-bg-content;

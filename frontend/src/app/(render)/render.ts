@@ -1,5 +1,5 @@
 import { applyTransforms, invert, transformMany } from "../(util)/transform";
-import { canvasToUnitTransform, toCanvasCenter } from "../(wasm-wrapper)/transform";
+import { canvasToUnitTransform, toCanvasCenterOrigin } from "../(wasm-wrapper)/transform";
 import { OklchColor, } from "../(wasm-wrapper)/structs";
 import { calculateRow, renderRow } from "../(wasm-wrapper)/rendering";
 import { RenderStateData } from "./data";
@@ -15,15 +15,11 @@ export const renderToCanvasRow = (data: RenderStateData, context: CanvasRenderin
     pdbRow.free();
 }
 
-export const postDraw = (data: RenderStateData, context: CanvasRenderingContext2D) => {
-    _drawRoots(data, context);
-}
-
-const _drawRoots = (data: RenderStateData, context: CanvasRenderingContext2D) => {
+export const drawRoots = (data: RenderStateData, context: CanvasRenderingContext2D) => {
     if (!data.fractalData) return;
 
     const { roots, transform } = data.fractalData;
-    const _transform = invert(transformMany(toCanvasCenter(), canvasToUnitTransform(transform)));
+    const _transform = invert(transformMany(toCanvasCenterOrigin(), canvasToUnitTransform(transform)));
     for (const root of roots.roots()) {
         const { x, y } = applyTransforms(root.re, root.im, _transform);
 

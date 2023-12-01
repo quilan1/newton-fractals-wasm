@@ -1,11 +1,11 @@
 import { MutableRefObject, useCallback, useRef } from "react";
-import { CanvasDrawFn } from "../(util)/animated-canvas";
 import { setterPromise } from "../(util)/util";
-import { postDraw, renderToCanvasRow } from "./render";
+import { drawRoots, renderToCanvasRow } from "./render";
 import { Transform } from "../(util)/transform";
 import { getNewtonSync } from "../(wasm-wrapper)/consts";
 import { RenderPassFn, RenderState, RenderStateData, freeFractalData, isRenderStateFinishedRendering, newFractalData, newRenderData, setRenderStateFinishedRendering } from "./data";
 import assert from "assert";
+import { CanvasDrawFn } from "../(components)/canvas";
 
 const renderFn = (context: CanvasRenderingContext2D, data: RenderStateData) => {
     data.prePassFn(data, context);
@@ -18,7 +18,7 @@ const renderFn = (context: CanvasRenderingContext2D, data: RenderStateData) => {
     if (isRenderStateFinishedRendering(data)) return;
 }
 
-export type RenderFn = (formula: string, dropoff: number, transform: Transform) => void;
+export type RenderFn = (formula: string, dropoff: number, transform: Transform, renderRoots: boolean) => void;
 
 export const useFractalDraw = () => {
     const [setDone, onDone] = setterPromise<number>();
@@ -48,10 +48,10 @@ export const useFractalDraw = () => {
 }
 
 const useNewRenderFn = (data: MutableRefObject<RenderStateData | undefined>, postFn: (data: RenderStateData) => void) => {
-    return useCallback((formula: string, dropoff: number, transform: Transform) => {
+    return useCallback((formula: string, dropoff: number, transform: Transform, renderRoots: boolean) => {
         if (data.current == undefined) data.current = newRenderStateData();
 
-        data.current.renderData = newRenderData();
+        data.current.renderData = newRenderData(renderRoots);
         if (getNewtonSync()) {
             freeFractalData(data.current.fractalData);
             data.current.fractalData = newFractalData(formula, dropoff, transform);
@@ -117,5 +117,7 @@ const renderPass: RenderPassFn = (data: RenderStateData, context: CanvasRenderin
 
 const postPass: RenderPassFn = (data: RenderStateData, context: CanvasRenderingContext2D) => {
     if (data.stateData.curState != RenderState.RENDER_PASS) return;
-    postDraw(data, context);
+    if (!(data.renderData?.renderRoots ?? false)) return;
+
+    drawRoots(data, context);
 }

@@ -6,7 +6,7 @@ export const unitToPixelTransform = (transform: Transform) => {
     return invert(canvasToUnitTransform(transform));
 }
 
-export const toCanvasCenter = () => {
+export const toCanvasCenterOrigin = () => {
     const canvasSize = getCanvasSize();
     return translate({ x: -canvasSize / 2, y: -canvasSize / 2 });
 }

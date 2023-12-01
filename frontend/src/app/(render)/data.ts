@@ -31,6 +31,7 @@ export interface RenderData {
     startTime: number,
     row: number,
     scaleFactor: number,
+    renderRoots: boolean,
 }
 
 export interface FractalData {
@@ -51,10 +52,11 @@ export const setRenderStateFinishedRendering = (data: RenderStateData) => {
     data.stateData.isRendering = false;
 }
 
-export const newRenderData = (): RenderData => ({
+export const newRenderData = (renderRoots: boolean): RenderData => ({
     startTime: Date.now(),
     row: 0,
-    scaleFactor: 5
+    scaleFactor: 5,
+    renderRoots,
 });
 
 export const newFractalData = (formula: string, dropoff: number, transform: Transform): FractalData | undefined => {

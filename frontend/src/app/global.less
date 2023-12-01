@@ -1,6 +1,23 @@
 @import "./mixins";
 
-:root {
+body {
     .flex(column, @align: center);
     .dark-content();
+    max-height: 100dvh;
+    height: 100%;
+
+    @media @media-width-full {
+        .flex(column, @align: flex-start);
+    }
+
+    @media @media-width-small {
+        .flex(column, @align: center);
+    }
+}
+
+// Set things such that we don't really have to worry about border
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
