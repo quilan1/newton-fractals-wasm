@@ -15,7 +15,7 @@
     }
 
     @media @media-width-small {
-        .grid(@columns: auto, @rows: minmax(@canvas-min, 1fr) auto);
+        .grid(@columns: minmax(@canvas-min, auto), @rows: minmax(@canvas-min, 1fr) auto);
         grid-template-areas: "canvas" "settingsStatus";
     }
 }
@@ -48,11 +48,15 @@
 
 .canvasContainer {
     display: grid;
+    max-height: 100%;
+    max-width: 100%;
 }
 
 .fractalCanvas {
     border: 3px solid black;
     border-style: inset;
+    min-width: 0;
+    min-height: 0;
     max-width: 100%;
     max-height: 100%;
     aspect-ratio: 1 / 1;
@@ -185,6 +189,5 @@
 ///////////////////////////////////////////////////////////////////
 
 .debugSettings {
-    // .grid(@columns: auto auto);
     width: auto;
 }
