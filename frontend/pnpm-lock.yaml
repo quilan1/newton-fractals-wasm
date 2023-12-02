@@ -11,9 +11,6 @@ dependencies:
   less-watch-compiler:
     specifier: ^1.16.3
     version: 1.16.3
-  newton_wasm:
-    specifier: file:src/pkg
-    version: file:src/pkg
   next:
     specifier: 14.0.2
     version: 14.0.2(react-dom@18.2.0)(react@18.2.0)
@@ -2652,8 +2649,3 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
     dev: true
-
-  file:src/pkg:
-    resolution: {directory: src/pkg, type: directory}
-    name: newtons-method
-    dev: false

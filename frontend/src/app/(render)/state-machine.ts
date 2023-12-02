@@ -4,8 +4,8 @@ import { drawRoots, renderToCanvasRow } from "./render";
 import { Transform } from "../(util)/transform";
 import { getNewtonSync } from "../(wasm-wrapper)/consts";
 import { RenderPassFn, RenderState, RenderStateData, freeFractalData, isRenderStateFinishedRendering, newFractalData, newRenderData, setRenderStateFinishedRendering } from "./data";
-import assert from "assert";
 import { CanvasDrawFn } from "../(components)/canvas";
+import assert from "assert";
 
 const renderFn = (context: CanvasRenderingContext2D, data: RenderStateData) => {
     data.prePassFn(data, context);
