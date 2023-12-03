@@ -9,6 +9,12 @@ use wasm_bindgen::prelude::*;
 
 ///////////////////////////////////////////////////////////////////
 
+// SAFETY: This application is single threaded, so using AssumeSingleThreaded is allowed.
+#[cfg(target_arch = "wasm32")]
+#[global_allocator]
+static ALLOCATOR: lol_alloc::AssumeSingleThreaded<lol_alloc::FreeListAllocator> =
+    unsafe { lol_alloc::AssumeSingleThreaded::new(lol_alloc::FreeListAllocator::new()) };
+
 #[wasm_bindgen(start)]
 pub fn run() {
     #[cfg(feature = "console_error_panic_hook")]

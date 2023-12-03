@@ -2,19 +2,23 @@ services:
   rust-compilation:
     image: rust:1.72
     working_dir: /newton
-    command: [ "./setup.sh" ]
+    command: ./setup.sh install-wasm
     volumes:
       - ./crates:/newton
       - ./frontend:/frontend
 
+      - /newton/target
+
   web:
     image: node:latest
     working_dir: /newton
-    command: [ "./setup.sh" ]
+    command: ./setup.sh
     ports: [ "3000:3000" ]
     depends_on:
       rust-compilation:
         condition: service_completed_successfully
     volumes:
       - ./frontend:/newton
+
       - /newton/node_modules/
+      - /newton/.next/

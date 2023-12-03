@@ -30,7 +30,4 @@ log = "0.4.20"
 num = "0.2.1"
 rand = "0.7.3"
 serde-wasm-bindgen = "0.6.1"
-
-[profile.release]
-# debug = true
-lto = true
+lol_alloc = "0.4.0"

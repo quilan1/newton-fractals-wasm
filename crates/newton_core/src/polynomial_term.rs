@@ -1,5 +1,4 @@
-use anyhow::{bail, Result};
-use regex::Regex;
+use anyhow::{anyhow, Result};
 
 use crate::polynomial::{Parseable, TPolynomial};
 
@@ -49,33 +48,25 @@ impl<T: TPolynomial + Parseable> PolynomialTerm<T> {
 }
 
 fn try_zed_parse(function_str: &str) -> Result<(f32, i32)> {
-    let re = Regex::new(r"^(?<coef>\d+)?z(\^(?<power>\d+))?$").unwrap();
-    let Some(captures) = re.captures(function_str) else {
-        bail!("Invalid polynomial term: {function_str}");
-    };
-    let coefficient = captures
-        .name("coef")
-        .map(|c| c.as_str().parse::<f32>())
+    let (coef, power) = function_str
+        .split_once('z')
+        .ok_or(anyhow!("No z found in function"))?;
+
+    let coefficient = (!coef.is_empty())
+        .then(|| coef.parse::<f32>())
         .unwrap_or(Ok(1.))?;
-    let power = captures
-        .name("power")
-        .map(|c| c.as_str().parse::<i32>())
+
+    let power = (!power.is_empty())
+        .then(|| power.strip_prefix('^'))
+        .flatten()
+        .map(str::parse::<i32>)
         .unwrap_or(Ok(1))?;
 
     Ok((coefficient, power))
 }
 
-fn try_digit_only_parse(function_str: &str) -> Result<(f32, i32)> {
-    let re = Regex::new(r"^(\d+)$").unwrap();
-    let Some(captures) = re.captures(function_str) else {
-        bail!("Invalid polynomial term: {function_str}");
-    };
-    let coefficient = captures
-        .get(0)
-        .map(|c| c.as_str().parse::<f32>())
-        .unwrap()?;
-
-    Ok((coefficient, 0))
+fn try_digit_only_parse(number: &str) -> Result<(f32, i32)> {
+    Ok((number.parse::<f32>()?, 0))
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -89,5 +80,18 @@ impl<T: TPolynomial> From<PolynomialTerm<T>> for (T, i32) {
 impl<T: TPolynomial> From<&PolynomialTerm<T>> for (T, i32) {
     fn from(polynomial_term: &PolynomialTerm<T>) -> Self {
         (polynomial_term.coefficient, polynomial_term.power)
+    }
+}
+
+///////////////////////////////////////////////////////////////////
+
+#[cfg(test)]
+mod tests {
+    #![allow(illegal_floating_point_literal_pattern)]
+    use super::*;
+
+    #[test]
+    fn test_normal() {
+        assert!(matches!(try_zed_parse("2z^3"), Ok((2., 3))));
     }
 }
