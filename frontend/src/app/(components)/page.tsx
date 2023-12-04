@@ -1,7 +1,7 @@
 'use client';
 import styles from './page.module.css';
 import { Valueded, useValue } from '../(util)/valued';
-import { useFractalDraw } from '../(render)/state-machine';
+import { RenderFn, useFractalDraw } from '../(render)/state-machine';
 import { useRef } from 'react';
 import { useDeferredFnExec } from '../(util)/deferred-fn';
 import { lerp, useAsyncOnce } from '../(util)/util';
@@ -46,7 +46,7 @@ const useFractals = () => {
     // void onDone.then(_duration => { console.log('Rendered:', _duration); isRendering.value = false; });
     void onDone.then(_duration => { isRendering.value = false; });
 
-    const renderNow = () => {
+    const beginRender = (fn: RenderFn) => {
         if (!isValidFormula(formula.value)) return;
         isRendering.value = true;
         const _dropoff = lerp(dropoff.value, 1.0, 0.15);
@@ -58,25 +58,15 @@ const useFractals = () => {
             renderRoots: renderRoots.value,
             staticHues: staticHues.value,
         };
-        startRender(formula.value, transform.current, renderSettings);
-    };
+        fn(formula.value, transform.current, renderSettings);
+    }
+
+    const renderNow = () => { beginRender(startRender); };
     const render = useDeferredFnExec(0.2, renderNow);
 
     const recolorNow = () => {
-        if (!isValidFormula(formula.value)) return;
         if (data?.stateData.curState == RenderState.RENDER_PASS) { renderNow(); return; }
-
-        isRendering.value = true;
-        const _dropoff = lerp(dropoff.value, 1.0, 0.15);
-        const renderSettings: RenderSettings = {
-            colorScheme: colorScheme.value,
-            hueOffset: hueOffset.value,
-            chromaticity: chromaticity.value,
-            dropoff: _dropoff,
-            renderRoots: renderRoots.value,
-            staticHues: staticHues.value,
-        };
-        recolorRender(formula.value, transform.current, renderSettings);
+        beginRender(recolorRender);
     };
     const recolor = useDeferredFnExec(0.2, recolorNow);
 
