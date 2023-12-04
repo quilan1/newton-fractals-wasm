@@ -146,14 +146,14 @@ const FormulaSettings = (props: FractalParams) => {
 ///////////////////////////////////////////////////////////////////
 
 const RenderPassSettings = (props: FractalParams) => {
-    const { renderSettings: { colorScheme, hueOffset, chromaticity, dropoff, renderRoots, staticHues }, render } = props;
+    const { renderSettings: { colorScheme, hueOffset, chromaticity, dropoff, renderRoots, staticHues }, recolor } = props;
 
-    const onChangeScheme = (e: ChangeEvent<HTMLSelectElement>) => { colorScheme.value = e.target.value as ColorScheme; render(); }
-    const onChangeHueOffset = (e: ChangeEvent<HTMLInputElement>) => { hueOffset.value = Number.parseFloat(e.target.value); render(); }
-    const onChangeChromaticity = (e: ChangeEvent<HTMLInputElement>) => { chromaticity.value = Number.parseFloat(e.target.value); render(); }
-    const onChangeDropoff = (e: ChangeEvent<HTMLInputElement>) => { dropoff.value = Number.parseFloat(e.target.value); render(); }
-    const onChangeDrawRoots = (e: ChangeEvent<HTMLInputElement>) => { renderRoots.value = e.target.checked; render(); }
-    const onChangeStaticHues = (e: ChangeEvent<HTMLInputElement>) => { staticHues.value = e.target.checked; render(); }
+    const onChangeScheme = (e: ChangeEvent<HTMLSelectElement>) => { colorScheme.value = e.target.value as ColorScheme; recolor(); }
+    const onChangeHueOffset = (e: ChangeEvent<HTMLInputElement>) => { hueOffset.value = Number.parseFloat(e.target.value); recolor(); }
+    const onChangeChromaticity = (e: ChangeEvent<HTMLInputElement>) => { chromaticity.value = Number.parseFloat(e.target.value); recolor(); }
+    const onChangeDropoff = (e: ChangeEvent<HTMLInputElement>) => { dropoff.value = Number.parseFloat(e.target.value); recolor(); }
+    const onChangeDrawRoots = (e: ChangeEvent<HTMLInputElement>) => { renderRoots.value = e.target.checked; recolor(); }
+    const onChangeStaticHues = (e: ChangeEvent<HTMLInputElement>) => { staticHues.value = e.target.checked; recolor(); }
 
     return (
         <div className={styles.renderPassSettings}>

@@ -2,7 +2,7 @@ import assert from "assert";
 import { applyTransforms, invert, transformMany } from "../(util)/transform";
 import { canvasToUnitTransform, toCanvasCenterOrigin } from "../(wasm-wrapper)/transform";
 import { OklchColor, } from "../(wasm-wrapper)/structs";
-import { calculateRow, renderRow } from "../(wasm-wrapper)/rendering";
+import { calculateRow, recolorRow, renderRow } from "../(wasm-wrapper)/rendering";
 import { ColorScheme, RenderSettings, RenderStateData } from "./data";
 import { Roots } from "@/pkg/newton_wasm";
 import { lerp, toSplitArray } from "../(util)/util";
@@ -15,6 +15,14 @@ export const renderToCanvasRow = (data: RenderStateData, context: CanvasRenderin
     const pdbRow = calculateRow(fz, roots, transform, 1 << scaleFactor, row);
     renderRow(context, roots, pdb, pdbRow, 1 << scaleFactor, row, renderSettings.dropoff);
     pdbRow.free();
+}
+
+export const recolorCanvasRow = (data: RenderStateData, context: CanvasRenderingContext2D) => {
+    assert(!!data.renderData && !!data.fractalData);
+
+    const { row, renderSettings } = data.renderData;
+    const { roots, pdb } = data.fractalData;
+    recolorRow(context, roots, pdb, row, renderSettings.dropoff);
 }
 
 export const drawRoots = (data: RenderStateData, context: CanvasRenderingContext2D) => {

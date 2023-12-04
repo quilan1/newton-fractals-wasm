@@ -11,7 +11,7 @@ import { isValidFormula } from '../(wasm-wrapper)/util';
 import { Settings, defaultPolynomials } from './settings';
 import { Status } from './status';
 import { Canvas } from './canvas';
-import { ColorScheme, RenderSettings } from '../(render)/data';
+import { ColorScheme, RenderSettings, RenderState } from '../(render)/data';
 
 export default function Home() {
     const props = useFractals();
@@ -31,7 +31,7 @@ export default function Home() {
 
 export type FractalParams = ReturnType<typeof useFractals>;
 const useFractals = () => {
-    const { drawFn, startRender, onDone } = useFractalDraw();
+    const { drawFn, startRender, recolorRender, onDone, data } = useFractalDraw();
     const formula = useValue(defaultPolynomials[0]);
     const curPoint = useValue("");
     const isRendering = useValue(false);
@@ -62,6 +62,24 @@ const useFractals = () => {
     };
     const render = useDeferredFnExec(0.2, renderNow);
 
+    const recolorNow = () => {
+        if (!isValidFormula(formula.value)) return;
+        if (data?.stateData.curState == RenderState.RENDER_PASS) { renderNow(); return; }
+
+        isRendering.value = true;
+        const _dropoff = lerp(dropoff.value, 1.0, 0.15);
+        const renderSettings: RenderSettings = {
+            colorScheme: colorScheme.value,
+            hueOffset: hueOffset.value,
+            chromaticity: chromaticity.value,
+            dropoff: _dropoff,
+            renderRoots: renderRoots.value,
+            staticHues: staticHues.value,
+        };
+        recolorRender(formula.value, transform.current, renderSettings);
+    };
+    const recolor = useDeferredFnExec(0.2, recolorNow);
+
     useInitializePage(renderNow);
 
     const renderSettings: Valueded<RenderSettings> = {
@@ -73,7 +91,7 @@ const useFractals = () => {
         staticHues,
     };
 
-    return { drawFn, render, renderNow, isRendering, formula, curPoint, transform, renderSettings };
+    return { drawFn, render, renderNow, recolor, isRendering, formula, curPoint, transform, renderSettings };
 }
 
 const useInitializePage = (fn: () => void) => {

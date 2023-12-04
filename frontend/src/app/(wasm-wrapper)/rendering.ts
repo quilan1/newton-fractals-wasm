@@ -13,6 +13,13 @@ export const renderRow = (
     getNewton().__renderRow(context, roots, pdb, pdbRow, renderScale, row, dropoff);
 }
 
+export const recolorRow = (
+    context: CanvasRenderingContext2D, roots: Roots, pdb: PixelDataBuffer, row: number,
+    dropoff: number,
+) => {
+    getNewton().__recolorRow(context, roots, pdb, row, dropoff);
+}
+
 export const newImagePixelDataBuffer = (): PixelDataBuffer => {
     return getNewton().__newImagePixelDataBuffer();
 }

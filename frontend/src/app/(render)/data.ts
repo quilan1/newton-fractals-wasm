@@ -8,13 +8,14 @@ import { newImagePixelDataBuffer } from "../(wasm-wrapper)/rendering";
 
 export enum RenderState {
     RENDER_PASS,
+    RECOLOR_PASS,
     DONE,
 }
 
-export type RenderPassFn = (data: RenderStateData, context: CanvasRenderingContext2D) => void;
+export type RenderPassFn<T = void> = (data: RenderStateData, context: CanvasRenderingContext2D) => T;
 export interface RenderStateData {
     prePassFn: RenderPassFn,
-    passFn: RenderPassFn,
+    passFn: RenderPassFn<boolean>,
     postPassFn: RenderPassFn,
 
     stateData: StateData,
