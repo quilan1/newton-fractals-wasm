@@ -28,6 +28,8 @@
 
     @media @media-width-small {
         justify-self: center;
+        max-width: calc(@canvas-max / 2);
+        width: 100%;
     }
 }
 
@@ -61,6 +63,7 @@
     max-height: 100%;
     aspect-ratio: 1 / 1;
     object-fit: contain;
+    border-radius: 0.5rem;
 
     @media @media-width-small {
         justify-self: center;
@@ -126,21 +129,28 @@
     border: 3px inset black;
     border-bottom-color: grey;
     border-bottom-style: ridge;
-    border-top-left-radius: 0.5rem;
-    border-top-right-radius: 0.5rem;
+    border-radius: 0.5rem 0.5rem 0 0;
 
     padding-inline: 0.5rem;
-    background-color: @color-bg-settings-unselected;
-    color: black;
-
-    cursor: pointer;
-}
-
-.settingsHeader.selectedPanel {
-    background-color: @color-bg-settings;
-    border-bottom: none;
+    background-color: @c2;
     color: black;
     font-weight: bold;
+
+    cursor: pointer;
+
+    &:hover {
+        color: @c1;
+    }
+
+    &.selectedPanel {
+        background-color: @color-bg-settings-selected;
+        border-bottom: none;
+        color: black;
+
+        &:hover {
+            color: black;
+        }
+    }
 }
 
 .settings {
@@ -149,11 +159,29 @@
     border: 3px inset black;
     border-top: none;
     min-height: 3rem;
+    border-radius: 0 0.5rem 0.5rem 0.5rem;
 
     label {
         color: black;
     }
 }
+
+.renderSettingsContainer {
+    width: auto;
+}
+
+.settingsDivider {
+    background-color: transparent;
+    border: none;
+    border-image: @dividerGrad 1 / 1px 0 / 1px;
+    height: 3px;
+    margin: 0.5rem auto;
+    width: 70%;
+}
+
+///////////////////////////////////////////////////////////////////
+
+
 
 ///////////////////////////////////////////////////////////////////
 // Settings dialog, Formula section
@@ -167,6 +195,10 @@
     background-color: @color-bg-input-unselected;
 }
 
+.formulaDropdown:focus {
+    background-color: unset;
+}
+
 .customFormula.badFormula {
     &:focus {
         box-shadow: none;
@@ -178,11 +210,15 @@
 
 ///////////////////////////////////////////////////////////////////
 
-.renderingSettings {
+.renderPassSettings {
     .grid(@columns: auto auto);
 
     >input {
         justify-self: flex-start;
+
+        &:not([type=checkbox]) {
+            width: 100%;
+        }
     }
 }
 

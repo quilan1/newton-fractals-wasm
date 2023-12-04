@@ -3,6 +3,10 @@ import { useState } from "react";
 export type SimpleSetter<T> = (_: T) => void;
 export type SimpleValueSetter<T> = [T, SimpleSetter<T>];
 
+export type Valueded<T extends object> = {
+    [K in keyof T]-?: Valued<T[K]>
+};
+
 export class Valued<T> {
     private state: T;
     private readonly setState: SimpleSetter<T>;

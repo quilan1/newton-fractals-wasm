@@ -6,15 +6,16 @@ import { classNames, useEventListener } from '../(util)/util';
 import { transformIdent } from '../(util)/transform';
 import { useValue } from '../(util)/valued';
 import { usePeriodicFn } from '../(util)/periodic-fn';
+import { ColorScheme } from '../(render)/data';
 
 enum SettingsPanel {
-    FORMULA = "Formula",
     RENDERING = "Rendering",
     DEBUG = "Debug",
+    HELP = "Help",
 }
 
 export const Settings = (props: FractalParams) => {
-    const settingsPanel = useValue(SettingsPanel.FORMULA);
+    const settingsPanel = useValue(SettingsPanel.RENDERING);
 
     const onChangeSettingsPanel = (panel: SettingsPanel) => (_e: MouseEvent<HTMLDivElement>) => { settingsPanel.value = panel; };
     const headerStyle = (panel: SettingsPanel) => classNames(styles, ['settingsHeader', (settingsPanel.value == panel) ? 'selectedPanel' : '']);
@@ -22,21 +23,32 @@ export const Settings = (props: FractalParams) => {
     return (
         <div className={styles.settingsContainer}>
             <div className={styles.settingsHeaderContainer}>
-                {Object.keys(SettingsPanel).map(s => {
-                    const panel = (SettingsPanel as Record<string, SettingsPanel>)[s];
-                    return <div key={s} className={headerStyle(panel)} onClick={onChangeSettingsPanel(panel)}>{panel}</div>
+                {Object.entries(SettingsPanel).map(([k, v]) => {
+                    return <div key={k} className={headerStyle(v)} onClick={onChangeSettingsPanel(v)}>{v}</div>
                 })}
             </div>
             <div className={styles.settings}>
-                {settingsPanel.value == SettingsPanel.FORMULA
-                    ? <FormulaSettings {...props} />
-                    : settingsPanel.value == SettingsPanel.RENDERING
-                        ? <RenderingSettings {...props} />
-                        : <DebugSettings {...props} />
+                {settingsPanel.value == SettingsPanel.RENDERING
+                    ? <RenderSettings {...props} />
+                    : settingsPanel.value == SettingsPanel.DEBUG
+                        ? <DebugSettings {...props} />
+                        : <></>
                 }
             </div>
         </div>
     );
+}
+
+///////////////////////////////////////////////////////////////////
+
+const RenderSettings = (props: FractalParams) => {
+    return (
+        <div className={styles.renderSettingsContainer}>
+            <FormulaSettings {...props} />
+            <hr className={styles.settingsDivider} />
+            <RenderPassSettings {...props} />
+        </div>
+    )
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -120,6 +132,7 @@ const FormulaSettings = (props: FractalParams) => {
             <label>Custom:</label>
             <input
                 className={formulaStyle}
+                type="text"
                 value={formula.value}
                 onChange={onChangeFormula}
                 onFocus={onFocus}
@@ -132,36 +145,34 @@ const FormulaSettings = (props: FractalParams) => {
 
 ///////////////////////////////////////////////////////////////////
 
-const RenderingSettings = (props: FractalParams) => {
-    const { dropoff, renderRoots } = props;
+const RenderPassSettings = (props: FractalParams) => {
+    const { renderSettings: { colorScheme, hueOffset, chromaticity, dropoff, renderRoots, staticHues }, render } = props;
 
-    const onChangeDropoff = (e: ChangeEvent<HTMLInputElement>) => {
-        const { dropoff, render } = props;
-        dropoff.value = Number.parseFloat(e.target.value);
-        render();
-    }
-
-    const onChangeDrawRoots = (e: ChangeEvent<HTMLInputElement>) => {
-        const { render, renderRoots } = props;
-        renderRoots.value = e.target.checked;
-        render();
-    }
+    const onChangeScheme = (e: ChangeEvent<HTMLSelectElement>) => { colorScheme.value = e.target.value as ColorScheme; render(); }
+    const onChangeHueOffset = (e: ChangeEvent<HTMLInputElement>) => { hueOffset.value = Number.parseFloat(e.target.value); render(); }
+    const onChangeChromaticity = (e: ChangeEvent<HTMLInputElement>) => { chromaticity.value = Number.parseFloat(e.target.value); render(); }
+    const onChangeDropoff = (e: ChangeEvent<HTMLInputElement>) => { dropoff.value = Number.parseFloat(e.target.value); render(); }
+    const onChangeDrawRoots = (e: ChangeEvent<HTMLInputElement>) => { renderRoots.value = e.target.checked; render(); }
+    const onChangeStaticHues = (e: ChangeEvent<HTMLInputElement>) => { staticHues.value = e.target.checked; render(); }
 
     return (
-        <div className={styles.renderingSettings}>
-            <label>Brightness Dropoff:</label>
-            <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={dropoff.value}
-                onChange={onChangeDropoff}
-            />
-            <label>Draw Roots:</label>
+        <div className={styles.renderPassSettings}>
+            <label>Color Scheme:</label>
+            <select className={styles.colorScheme} onChange={onChangeScheme} value={props.renderSettings.colorScheme.value}>
+                {Object.entries(ColorScheme).map(([k, v]) => <option key={k} value={v}>{v}</option>)}
+            </select>
+            <label>Hue Offset:</label>
+            <input type="range" min="0" max="360" step="1" value={props.renderSettings.hueOffset.value} onChange={onChangeHueOffset} />
+            <label>Chromaticity:</label>
+            <input type="range" min="0" max="1" step="0.05" value={props.renderSettings.chromaticity.value} onChange={onChangeChromaticity} />
+            <label>Shading Curve:</label>
+            <input type="range" min="0" max="1" step="0.05" value={dropoff.value} onChange={onChangeDropoff} />
+            <label>Show Roots:</label>
             <input type="checkbox" checked={renderRoots.value} onChange={onChangeDrawRoots} />
+            <label>Static Hues:</label>
+            <input type="checkbox" checked={staticHues.value} onChange={onChangeStaticHues} />
         </div>
-    );
+    )
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -180,7 +191,6 @@ const DebugSettings = (_props: FractalParams) => {
         </div>
     )
 }
-
 
 ///////////////////////////////////////////////////////////////////
 

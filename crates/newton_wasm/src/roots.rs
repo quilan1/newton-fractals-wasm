@@ -35,7 +35,7 @@ impl Roots {
         self.0.colors.iter().cloned().map(Into::into).collect()
     }
 
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = "setColors")]
     pub fn set_colors(&mut self, colors: JsOklchColorArray) -> Result<(), JsError> {
         let colors: JsValue = colors.into();
         let colors: Array = colors.into();

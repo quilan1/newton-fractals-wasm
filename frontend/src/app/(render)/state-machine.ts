@@ -3,7 +3,7 @@ import { setterPromise } from "../(util)/util";
 import { drawRoots, renderToCanvasRow } from "./render";
 import { Transform } from "../(util)/transform";
 import { getNewtonSync } from "../(wasm-wrapper)/consts";
-import { RenderPassFn, RenderState, RenderStateData, freeFractalData, isRenderStateFinishedRendering, newFractalData, newRenderData, setRenderStateFinishedRendering } from "./data";
+import { RenderPassFn, RenderSettings, RenderState, RenderStateData, freeFractalData, isRenderStateFinishedRendering, newFractalData, newRenderData, setRenderStateFinishedRendering } from "./data";
 import { CanvasDrawFn } from "../(components)/canvas";
 import assert from "assert";
 
@@ -18,7 +18,7 @@ const renderFn = (context: CanvasRenderingContext2D, data: RenderStateData) => {
     if (isRenderStateFinishedRendering(data)) return;
 }
 
-export type RenderFn = (formula: string, dropoff: number, transform: Transform, renderRoots: boolean) => void;
+export type RenderFn = (formula: string, transform: Transform, renderSettings: RenderSettings) => void;
 
 export const useFractalDraw = () => {
     const [setDone, onDone] = setterPromise<number>();
@@ -48,13 +48,13 @@ export const useFractalDraw = () => {
 }
 
 const useNewRenderFn = (data: MutableRefObject<RenderStateData | undefined>, postFn: (data: RenderStateData) => void) => {
-    return useCallback((formula: string, dropoff: number, transform: Transform, renderRoots: boolean) => {
+    return useCallback((formula: string, transform: Transform, renderSettings: RenderSettings) => {
         if (data.current == undefined) data.current = newRenderStateData();
 
-        data.current.renderData = newRenderData(renderRoots);
+        data.current.renderData = newRenderData(renderSettings);
         if (getNewtonSync()) {
             freeFractalData(data.current.fractalData);
-            data.current.fractalData = newFractalData(formula, dropoff, transform);
+            data.current.fractalData = newFractalData(formula, transform, renderSettings);
         }
 
         data.current.stateData = {
@@ -117,7 +117,7 @@ const renderPass: RenderPassFn = (data: RenderStateData, context: CanvasRenderin
 
 const postPass: RenderPassFn = (data: RenderStateData, context: CanvasRenderingContext2D) => {
     if (data.stateData.curState != RenderState.RENDER_PASS) return;
-    if (!(data.renderData?.renderRoots ?? false)) return;
+    if (!(data.renderData?.renderSettings.renderRoots ?? false)) return;
 
     drawRoots(data, context);
 }
