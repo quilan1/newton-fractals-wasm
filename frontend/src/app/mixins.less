@@ -1,22 +1,40 @@
-@color-bg-content: #444;
-@color-bg-settings: #BBB;
-@color-bg-settings-unselected: #888;
-@color-bg-input-unselected: #888;
+@blue1: #27F;
+@blue2: #456;
+@yellow1: #FB4;
+@yellow2: #874;
 
-@color-fg-border: #222;
-@color-fg-label: #CCC;
+@white: #CCC;
+@black: #222;
+@dark-grey: #444;
+@grey: #888;
+@light-grey: #BBB;
 
-@c1: #FB4;
-@c2: #47A;
-@c3: #27F;
-@c4: #874;
-@c5: #456;
+@blank: #0000;
 
-@color-bg-settings: #BBB;
-@color-bg-settings-selected: @color-bg-settings;
-@color-bg-settings-unselected: @c5;
+////////////////////////////////////
 
-@dividerGrad: linear-gradient(90deg, #F000 0%, #666 50%, #00F0 100%);
+@color-bg-content: @dark-grey;
+@color-bg-settings: @light-grey;
+
+@color-fg-anchor: @blue1;
+@color-fg-border: @black;
+@color-fg-label: @white;
+
+@color-hover: @yellow1;
+
+@color-bg-header-selected: @color-bg-settings;
+@color-bg-header-unselected: lighten(@blue1, 10%);
+@color-fg-header-selected: @black;
+@color-fg-header-unselected: @black;
+
+@color-bg-input-selected: @light-grey;
+@color-bg-input-unselected: @grey;
+@color-fg-input-selected: @black;
+@color-fg-input-unselected: @black;
+
+@dividerGrad: linear-gradient(90deg, @blank 0%, @dark-grey 50%, @blank 100%);
+
+////////////////////////////////////
 
 @settings-width-min: 15rem;
 @settings-width-max: 25rem;
@@ -25,19 +43,21 @@
 @media-width-full: ~'(max-width: 102rem)'; // 50 + 2*25 + 4*0.5
 @media-width-small: ~'(max-width: 37.0rem)'; // 20.5 + 15 + 3*0.5
 
+////////////////////////////////////
+
 .dark-content() {
-    background-color: @color-bg-content;
+    background-color: @dark-grey;
 
     label {
-        color: @color-fg-label;
+        color: @light-grey;
     }
 }
 
 .light-content() {
-    background-color: @color-bg-table;
+    background-color: @light-grey;
 
     label {
-        color: @color-fg-border;
+        color: @dark-grey;
     }
 }
 

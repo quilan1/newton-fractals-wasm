@@ -55,7 +55,7 @@
 }
 
 .fractalCanvas {
-    border: 3px solid black;
+    border: 3px solid @color-fg-border;
     border-style: inset;
     min-width: 0;
     min-height: 0;
@@ -98,7 +98,7 @@
 
 .renderDisplay() {
     border-radius: 50%;
-    border: 2px outset black;
+    border: 2px outset @color-fg-border;
     width: 0.6rem;
     height: 0.6rem;
 }
@@ -126,44 +126,41 @@
 }
 
 .settingsHeader {
-    border: 3px inset black;
-    border-bottom-color: grey;
+    border: 3px inset @color-fg-border;
+    border-bottom-color: @grey;
     border-bottom-style: ridge;
     border-radius: 0.5rem 0.5rem 0 0;
 
+    background-color: @color-bg-header-unselected;
+    color: @color-fg-header-selected;
+
     padding-inline: 0.5rem;
-    background-color: @c2;
-    color: black;
     font-weight: bold;
 
     cursor: pointer;
 
     &:hover {
-        color: @c1;
+        color: @color-hover;
     }
 
     &.selectedPanel {
-        background-color: @color-bg-settings-selected;
+        background-color: @color-bg-header-selected;
         border-bottom: none;
-        color: black;
 
+        &,
         &:hover {
-            color: black;
+            color: @color-fg-header-selected;
         }
     }
 }
 
 .settings {
-    background-color: @color-bg-settings;
+    .light-content();
     padding: 0.5rem;
-    border: 3px inset black;
+    border: 3px inset @color-fg-border;
     border-top: none;
     min-height: 3rem;
     border-radius: 0 0.5rem 0.5rem 0.5rem;
-
-    label {
-        color: black;
-    }
 }
 
 .renderSettingsContainer {
@@ -180,10 +177,6 @@
 }
 
 ///////////////////////////////////////////////////////////////////
-
-
-
-///////////////////////////////////////////////////////////////////
 // Settings dialog, Formula section
 
 .formulaSettings {
@@ -193,6 +186,7 @@
 .formulaDropdown.isCustomFormula,
 .customFormula:not(.isCustomFormula, :focus) {
     background-color: @color-bg-input-unselected;
+    color: @color-fg-input-unselected;
 }
 
 .formulaDropdown:focus {
@@ -226,4 +220,18 @@
 
 .debugSettings {
     width: auto;
+}
+
+///////////////////////////////////////////////////////////////////
+
+.infoSettings {
+    h1 {
+        margin-top: 0;
+        font-size: 2rem;
+    }
+
+    span {
+        font-weight: bold;
+        font-style: italic;
+    }
 }

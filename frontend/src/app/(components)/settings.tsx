@@ -11,7 +11,7 @@ import { ColorScheme } from '../(render)/data';
 enum SettingsPanel {
     RENDERING = "Rendering",
     DEBUG = "Debug",
-    HELP = "Help",
+    INFO = "Info",
 }
 
 export const Settings = (props: FractalParams) => {
@@ -32,7 +32,7 @@ export const Settings = (props: FractalParams) => {
                     ? <RenderSettings {...props} />
                     : settingsPanel.value == SettingsPanel.DEBUG
                         ? <DebugSettings {...props} />
-                        : <></>
+                        : <InfoSettings />
                 }
             </div>
         </div>
@@ -188,6 +188,32 @@ const DebugSettings = (_props: FractalParams) => {
     return (
         <div className={styles.debugSettings}>
             <label>WASM Memory usage: {memoryUsage.value} MB</label>
+        </div>
+    )
+}
+
+///////////////////////////////////////////////////////////////////
+
+const InfoSettings = () => {
+
+    const overviewHref = "https://github.com/quilan1/newton-fractals-wasm#detailed-overview"
+
+    return (
+        <div className={styles.infoSettings}>
+            <h1>Newton&apos;s Method Sandbox</h1>
+            <p>
+                Use the <span>Formula</span> dropdown to select a pre-made function for rendering. Alternatively,
+                one may use the <span>Custom</span> input for entering their own functions.
+            </p>
+            <p>
+                The <span>mouse wheel</span> may be used to zoom in/out and the mouse may reposition by <span>click-dragging</span> the
+                image. The pre-selected functions may be switched between by pressing the <span>left</span> or <span>right</span> keyboard
+                arrow.
+            </p>
+            <p>
+                For more detailed usage information, as well as other resources, consult
+                the <a href={overviewHref} target="_blank">README.md</a>.
+            </p>
         </div>
     )
 }

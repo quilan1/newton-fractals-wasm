@@ -18,10 +18,19 @@ body {
 
 // Set some colors
 
+a {
+    font-weight: bold;
+    color: @color-fg-anchor;
+
+    &:hover {
+        color: @yellow2;
+    }
+}
+
 select,
 input[type="text"] {
     &:not(:focus):hover {
-        background-color: @c1;
+        background-color: @color-hover;
     }
 }
 
@@ -30,7 +39,7 @@ input {
     &[type="range"],
     &[type="checkbox"] {
         &:hover {
-            box-shadow: 0 0 4px 1px @c1, 0 0 4px darken(@c1, 40%);
+            box-shadow: 0 0 4px 1px @color-hover, 0 0 4px darken(@color-hover, 40%);
         }
     }
 }
