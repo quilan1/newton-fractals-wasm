@@ -1,5 +1,5 @@
 import styles from './page.module.css';
-import { ChangeEvent, MouseEvent, useRef } from 'react';
+import { ChangeEvent, MouseEvent, useCallback, useEffect, useRef } from 'react';
 import { FractalParams } from './page';
 import { isValidFormula, wasmMemoryUsage } from '../(wasm-wrapper)/util';
 import { classNames, useEventListener } from '../(util)/util';
@@ -7,6 +7,7 @@ import { transformIdent } from '../(util)/transform';
 import { useValue } from '../(util)/valued';
 import { usePeriodicFn } from '../(util)/periodic-fn';
 import { ColorScheme } from '../(render)/data';
+import { randomCycle2, randomFormula } from './random-formulas';
 
 enum SettingsPanel {
     RENDERING = "Rendering",
@@ -97,13 +98,17 @@ const FormulaSettings = (props: FractalParams) => {
         reRender();
     }
 
-    const onFocus = () => {
+    const onFocus = useCallback(() => {
         isCustomFormula.value = !defaultPolynomials.includes(formula.value);
         if (!customRef.current || !dropdownRef.current || !document.activeElement) return;
         isCustomFormula.value ||= (document.activeElement == customRef.current);
-    }
+    }, [isCustomFormula, formula.value]);
+    useEffect(() => { onFocus(); }, [onFocus, formula.value]);
 
     useEventListener('keydown', onKeyDown as EventListener, <Element,>() => { return window as unknown as Element });
+
+    const onClickRandomCycle2 = () => { formula.value = randomCycle2(); reRender(); }
+    const onClickRandomFormula = () => { formula.value = randomFormula(); reRender(); }
 
     const _isValidFormula = isValidFormula(formula.value);
     const formulaDropdownStyle = classNames(styles, [
@@ -139,6 +144,33 @@ const FormulaSettings = (props: FractalParams) => {
                 onBlur={onFocus}
                 ref={customRef}
             />
+            <button
+                className={styles.randomFormula}
+                onClick={onClickRandomCycle2} >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <g fill="none" stroke="black" strokeWidth="1" strokeLinejoin="round">
+                        <polygon fill="none" strokeWidth="15" points="0,0 100,0 100,100 0,100" />
+                        <g className={styles.randomCycle2Circles}>
+                            <circle fill="black" cx="25" cy="25" r="10" />
+                            <circle fill="black" cx="75" cy="75" r="10" />
+                        </g>
+                    </g>
+                </svg>
+            </button>
+            <button
+                className={styles.randomFormula}
+                onClick={onClickRandomFormula} >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <g fill="none" stroke="black" strokeWidth="1" strokeLinejoin="round">
+                        <polygon fill="none" strokeWidth="15" points="0,0 100,0 100,100 0,100" />
+                        <circle fill="black" cx="50" cy="50" r="10" />
+                        <circle fill="black" cx="25" cy="25" r="10" />
+                        <circle fill="black" cx="75" cy="25" r="10" />
+                        <circle fill="black" cx="25" cy="75" r="10" />
+                        <circle fill="black" cx="75" cy="75" r="10" />
+                    </g>
+                </svg>
+            </button>
         </div>
     );
 }
@@ -231,9 +263,10 @@ export const defaultPolynomials = [
     'z^10 + z^8 - 2z^2 + 1',
     '-3z^10 - 4z^4 + z^2 - 2z - 3',
     '-2z^6 - 3z^3 - z + 6',
-    '-z^9 + 4z^5 - 4z + 1',
+    '-8*z^6 - 9*z^4 + 1*z^3 - 107*z^2 + 117*z - 321',
     'z^7 - 4z^2 + 2z - 3',
     'z^4 - 3z^2 - 4',
+
     'z^4 - 3z^2 + 3',
     'z^4 + 3z^2 + 3',
 
@@ -248,6 +281,12 @@ export const defaultPolynomials = [
     '2z^4 + z^3 + 4z + 4',
     'z^4 + 3z + 3',
     'z^4 - 4z^3 - 9z + 27',
+    '7z^5 + 5z^4 - 2z^2 - 41z + 41', // c2?: [-1, 1], [7, 5, 0, -2]
+    '9z^5 + 6z^4 - 9z^3 + 27z^2 - 36z + 123', // c2a: [-1, 1], [9, 6, -9]
+    '3z^5 + z^4 - 9z^3 - 8z^2 + 18z - 17', //c2: [-1, 1], [3, 1, -9, -8]
+    '2z^5 + 4z^4 - 3z^3 - 6z^2 - 3z + 10', //c2: [-1, 1], [2, 4, -3, -6]
+    '-6z^5 - 13z^4 + 3z^3 + 31z - 58', // A 4-cycle!?! Awesome!
+    '6z^6 + 8z^5 - z^4 - 23z + 54', // Extraordinarily chaotic around z=0... not sure if there's a cycle length
 
     'z^6 - 4z^4 + 4z^2 - 4',
     'z^6 - 4z^4 + 6z^2 + 3',

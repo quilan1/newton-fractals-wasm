@@ -38,8 +38,8 @@ const useFractals = () => {
     const transform = useRef(transformIdent());
     const colorScheme = useValue(ColorScheme.CONTRASTING_HUES);
     const hueOffset = useValue(0.0);
-    const chromaticity = useValue(0.5);
-    const dropoff = useValue(1.0);
+    const chromaticity = useValue(0.25);
+    const dropoff = useValue(0.5);
     const renderRoots = useValue(false);
     const staticHues = useValue(false);
 

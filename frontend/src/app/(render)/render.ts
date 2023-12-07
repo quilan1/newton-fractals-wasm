@@ -5,7 +5,7 @@ import { OklchColor, } from "../(wasm-wrapper)/structs";
 import { calculateRow, recolorRow, renderRow } from "../(wasm-wrapper)/rendering";
 import { ColorScheme, RenderSettings, RenderStateData } from "./data";
 import { Roots } from "@/pkg/newton_wasm";
-import { lerp, toSplitArray } from "../(util)/util";
+import { lerpClamped, toSplitArray } from "../(util)/util";
 
 export const renderToCanvasRow = (data: RenderStateData, context: CanvasRenderingContext2D) => {
     assert(!!data.renderData && !!data.fractalData);
@@ -65,7 +65,7 @@ export const setRootColors = (roots: Roots, renderSettings: RenderSettings) => {
         radius: radii[i],
         color: {
             h: Math.atan2(c.im, c.re) * 180 / Math.PI,
-            c: lerp(radii[i] / 1.5, 0.01, 0.4 * chromaticity),
+            c: lerpClamped(radii[i] / 1.5, 0.01, 0.4 * chromaticity),
         }
     }));
 

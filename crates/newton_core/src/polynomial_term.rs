@@ -34,9 +34,9 @@ impl<T: TPolynomial> PolynomialTerm<T> {
 impl<T: TPolynomial + Parseable> PolynomialTerm<T> {
     pub fn parse(function_str: &str, sign: f32) -> Result<Option<Self>> {
         let (coefficient, power) =
-            try_zed_parse(function_str).or(try_digit_only_parse(function_str))?;
+            try_zed_parse(function_str).or_else(|_| try_digit_only_parse(function_str))?;
         let coefficient = sign * coefficient;
-        Ok(if power == 0 && coefficient == 0. {
+        Ok(if coefficient == 0. {
             None
         } else {
             Some(Self {
@@ -50,7 +50,7 @@ impl<T: TPolynomial + Parseable> PolynomialTerm<T> {
 fn try_zed_parse(function_str: &str) -> Result<(f32, i32)> {
     let (coef, power) = function_str
         .split_once('z')
-        .ok_or(anyhow!("No z found in function"))?;
+        .ok_or_else(|| anyhow!("No z found in function"))?;
 
     let coefficient = (!coef.is_empty())
         .then(|| coef.parse::<f32>())

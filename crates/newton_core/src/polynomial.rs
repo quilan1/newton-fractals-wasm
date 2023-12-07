@@ -106,7 +106,8 @@ impl<T: TPolynomial + Parseable> Polynomial<T> {
         let mut function = Vec::new();
         let mut derivative = Vec::new();
 
-        let mut function_str = function_str.replace([' ', '(', ')', '*'], "");
+        let function_str = function_str.replace([' ', '(', ')', '*'], "");
+        let mut function_str = function_str.replace("+-", "-");
         if function_str.starts_with('-') {
             function_str = format!("0{function_str}");
         };
@@ -129,6 +130,7 @@ impl<T: TPolynomial + Parseable> Polynomial<T> {
 
         let plus = plus.into_iter().flatten().collect::<Vec<_>>();
         let minus = minus.into_iter().flatten().collect::<Vec<_>>();
+        // println!("Plus: {plus:?}, Minus: {minus:?}");
 
         for term in plus {
             let Some(cp) = PolynomialTerm::parse(term, 1.)? else {
@@ -248,6 +250,26 @@ mod tests {
         assert_eq!(
             terms_to_vec(&fz.function),
             vec![(-3., 10), (-4., 4), (1., 2), (-2., 1), (-4., 0)]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_zero_coefficients() -> Result<()> {
+        let fz = FPolynomial::parse("0*z^5 - 4*z^4 - 9*z^3 + 0*z^2 + 30z - 30")?;
+        assert_eq!(
+            terms_to_vec(&fz.function),
+            vec![(-4., 4), (-9., 3), (30., 1), (-30., 0)]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_plus_negative_coefficients() -> Result<()> {
+        let fz = FPolynomial::parse("+-z^5 + 4*z^4 + -9*z^3 + -20")?;
+        assert_eq!(
+            terms_to_vec(&fz.function),
+            vec![(-1., 5), (4., 4), (-9., 3), (-20., 0)]
         );
         Ok(())
     }
