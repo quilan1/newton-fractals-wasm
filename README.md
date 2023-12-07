@@ -41,8 +41,15 @@ For more details about Newton's Method, I recommend reading [The Wiki](https://e
 
 ### Basic UI Usage
 
+#### Formulas
+
 * `Formula`: These are a number of interesting-looking functions I've found over the course of either randomly generating new functions, or exploring various classes of function (eg. generating 2-cycles). Choose a function, see the pretty picture!
 * `Custom`: If you'd like to play around with making your own polynomials, put them here. Valid polynomials are those with integer coefficients and positive exponents of z value. Complex or floating coefficients, math functions, parentheses, etc. are not yet implemented. Perhaps a distant goal.
+* `Random 2-Cycle`: Attempts to generate 5th degree functions with super-attracting critical points. Sometimes this works, and sometimes not. To actually determine if it is a cycle requires analysis of ~25-degree polynomials though, so by chance it is, for now.
+* `Random`: Generates random coefficients for formulas. Truly YOLO generation.
+
+#### Rendering
+
 * `Color Scheme`: The three color schemes function as such:
   * `Contrasting Hues`: Colors are initially chosen via the `Linear Hue` scheme. Once that's done though, every other hue is interleaved to produce maximal adjacent hue differences. This yields a highly contrasting set of hues, rotationally.
   * `Linear Hue`: Every root gets a unique hue based on the root's polar angle & radius. 'Red' is at 0° (positive real axis), 'Green' at 120°, 'Blue' at 240°. The radius of the root determines the chromaticity of the root; roots closer to the origin will yield paler colors than those further away.

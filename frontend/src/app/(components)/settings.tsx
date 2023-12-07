@@ -127,6 +127,7 @@ const FormulaSettings = (props: FractalParams) => {
             <select
                 className={formulaDropdownStyle}
                 value={formula.value}
+                title={desc.formula}
                 onChange={onChangeFormula}
                 onFocus={onFocus}
                 onBlur={onFocus}
@@ -139,6 +140,7 @@ const FormulaSettings = (props: FractalParams) => {
                 className={formulaStyle}
                 type="text"
                 value={formula.value}
+                title={desc.custom}
                 onChange={onChangeFormula}
                 onFocus={onFocus}
                 onBlur={onFocus}
@@ -146,6 +148,7 @@ const FormulaSettings = (props: FractalParams) => {
             />
             <button
                 className={styles.randomFormula}
+                title={desc.randomCycle2}
                 onClick={onClickRandomCycle2} >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
                     <g fill="none" stroke="black" strokeWidth="1" strokeLinejoin="round">
@@ -159,6 +162,7 @@ const FormulaSettings = (props: FractalParams) => {
             </button>
             <button
                 className={styles.randomFormula}
+                title={desc.randomFormula}
                 onClick={onClickRandomFormula} >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
                     <g fill="none" stroke="black" strokeWidth="1" strokeLinejoin="round">
@@ -190,19 +194,32 @@ const RenderPassSettings = (props: FractalParams) => {
     return (
         <div className={styles.renderPassSettings}>
             <label>Color Scheme:</label>
-            <select className={styles.colorScheme} onChange={onChangeScheme} value={props.renderSettings.colorScheme.value}>
+            <select
+                className={styles.colorScheme}
+                value={props.renderSettings.colorScheme.value}
+                title={desc.colorScheme}
+                onChange={onChangeScheme}>
                 {Object.entries(ColorScheme).map(([k, v]) => <option key={k} value={v}>{v}</option>)}
             </select>
             <label>Hue Offset:</label>
-            <input type="range" min="0" max="360" step="1" value={props.renderSettings.hueOffset.value} onChange={onChangeHueOffset} />
+            <input type="range" min="0" max="360" step="1"
+                value={props.renderSettings.hueOffset.value}
+                title={desc.hueOffset}
+                onChange={onChangeHueOffset} />
             <label>Chromaticity:</label>
-            <input type="range" min="0" max="1" step="0.05" value={props.renderSettings.chromaticity.value} onChange={onChangeChromaticity} />
+            <input type="range" min="0" max="1" step="0.05"
+                value={props.renderSettings.chromaticity.value}
+                title={desc.chromaticity}
+                onChange={onChangeChromaticity} />
             <label>Shading Curve:</label>
-            <input type="range" min="0" max="1" step="0.05" value={dropoff.value} onChange={onChangeDropoff} />
+            <input type="range" min="0" max="1" step="0.05"
+                value={dropoff.value}
+                title={desc.shadingCurve}
+                onChange={onChangeDropoff} />
             <label>Show Roots:</label>
-            <input type="checkbox" checked={renderRoots.value} onChange={onChangeDrawRoots} />
+            <input type="checkbox" checked={renderRoots.value} title={desc.showRoots} onChange={onChangeDrawRoots} />
             <label>Static Hues:</label>
-            <input type="checkbox" checked={staticHues.value} onChange={onChangeStaticHues} />
+            <input type="checkbox" checked={staticHues.value} title={desc.staticHues} onChange={onChangeStaticHues} />
         </div>
     )
 }
@@ -227,7 +244,6 @@ const DebugSettings = (_props: FractalParams) => {
 ///////////////////////////////////////////////////////////////////
 
 const InfoSettings = () => {
-
     const overviewHref = "https://github.com/quilan1/newton-fractals-wasm#detailed-overview"
 
     return (
@@ -252,18 +268,34 @@ const InfoSettings = () => {
 
 ///////////////////////////////////////////////////////////////////
 
+const desc = {
+    formula: 'Pre-screened interesting polynomial formulas',
+    custom: 'Enter in any integer-coefficient polynomial',
+    randomCycle2: 'Attempt to generate a 2-Cycle super-attracting function',
+    randomFormula: 'Generate random coefficients',
+    colorScheme: 'Change how the polynomial roots are colored',
+    hueOffset: 'Shift the color scheme for polynomial roots along the color wheel',
+    chromaticity: 'Change the level of saturation of the colors',
+    shadingCurve: 'Change the level of exponential falloff for the shading algorithm',
+    showRoots: 'Draw a circle around the roots of the polynomial in the complex plane',
+    staticHues: 'Color hues always start at 0°, instead of the first root\'s complex argument',
+}
+
 export const defaultPolynomials = [
     // a=1, b=-13.8     z^5 + a*z^3 + b*z^2 - 5*a*z - 9*z + 3*b
     '5z^5 + 5z^3 - 69z^2 - 70z - 207',
 
-    'z^13 - 3z^6 + z - 1',
+    'z^9 + 4z^8 - 7z^7 + 4z - 3',
+    '-2z^9 + 32z - 41',
     'z^5 + 3z^3 + z + 3',
     '2z^11 - 2z^7 + 4z^6 + 4z^5 - 4z^4 - 3z - 2',
     '-2z^10 + 3z^8 + z^6 + z^4 + 4z^2 + 5z + 5',
     'z^10 + z^8 - 2z^2 + 1',
     '-3z^10 - 4z^4 + z^2 - 2z - 3',
     '-2z^6 - 3z^3 - z + 6',
-    '-8*z^6 - 9*z^4 + 1*z^3 - 107*z^2 + 117*z - 321',
+    '-8z^6 - 9z^4 + z^3 - 107z^2 + 117z - 321',
+    '-2z^5 + z^4 + 5z^3 - 4z^2 - 4z - 5',
+    'z^13 - 3z^6 + z - 1',
     'z^7 - 4z^2 + 2z - 3',
     'z^4 - 3z^2 - 4',
 
@@ -285,8 +317,9 @@ export const defaultPolynomials = [
     '9z^5 + 6z^4 - 9z^3 + 27z^2 - 36z + 123', // c2a: [-1, 1], [9, 6, -9]
     '3z^5 + z^4 - 9z^3 - 8z^2 + 18z - 17', //c2: [-1, 1], [3, 1, -9, -8]
     '2z^5 + 4z^4 - 3z^3 - 6z^2 - 3z + 10', //c2: [-1, 1], [2, 4, -3, -6]
+    // '-12*z^4 + 10*z^3 + 31*z - 60' // A 3-cycle
     '-6z^5 - 13z^4 + 3z^3 + 31z - 58', // A 4-cycle!?! Awesome!
-    '6z^6 + 8z^5 - z^4 - 23z + 54', // Extraordinarily chaotic around z=0... not sure if there's a cycle length
+    '6z^6 + 8z^5 - z^4 - 23z + 54', // Extraordinarily chaotic around z=0... not sure if there even is a cycle length
 
     'z^6 - 4z^4 + 4z^2 - 4',
     'z^6 - 4z^4 + 6z^2 + 3',
