@@ -43,8 +43,8 @@ export function useDeferredFn(timeout: number) {
             }
 
             isRunning.current = true;
-            fn();
-            isRunning.current = false;
+            try { fn(); }
+            finally { isRunning.current = false; }
         };
 
         timeoutId.current = setTimeout(timerFn, timeout);

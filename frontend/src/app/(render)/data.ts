@@ -1,8 +1,8 @@
 import { PixelDataBuffer, Polynomial, Roots } from "@/pkg/newton_wasm";
-import { Transform } from "../(util)/transform";
-import { IterRootMethod, newPolynomial, newRoots } from "../(wasm-wrapper)/structs";
+import { newPolynomial, newRoots } from "../(wasm-wrapper)/structs";
 import { setRootColors } from "./render";
 import { newImagePixelDataBuffer } from "../(wasm-wrapper)/rendering";
+import { AppGeneralProps } from "../(components)/app-props";
 
 ///////////////////////////////////////////////////////////////////
 
@@ -14,13 +14,18 @@ export enum RenderState {
 
 export type RenderPassFn<T = void> = (data: RenderStateData, context: CanvasRenderingContext2D) => T;
 export interface RenderStateData {
+    fns: StateMachineFns,
+
+    stateData: StateData,
+    generalProps: AppGeneralProps,
+    renderData?: RenderData,
+    fractalData?: FractalData,
+}
+
+export interface StateMachineFns {
     prePassFn: RenderPassFn,
     passFn: RenderPassFn<boolean>,
     postPassFn: RenderPassFn,
-
-    stateData: StateData,
-    renderData?: RenderData,
-    fractalData?: FractalData,
 }
 
 export interface StateData {
@@ -28,34 +33,16 @@ export interface StateData {
     isRendering: boolean,
 }
 
-export enum ColorScheme {
-    CONTRASTING_HUES = "Contrasting Hues",
-    LINEAR_HUES = "Linear Hues",
-    MONOCHROMATIC = "Monochromatic"
-}
-
-export interface RenderSettings {
-    colorScheme: ColorScheme,
-    hueOffset: number,
-    chromaticity: number,
-    dropoff: number,
-    renderRoots: boolean,
-    staticHues: boolean,
-}
-
 export interface RenderData {
     startTime: number,
     row: number,
     scaleFactor: number,
-    renderSettings: RenderSettings
 }
 
 export interface FractalData {
     fz: Polynomial,
     roots: Roots,
     pdb: PixelDataBuffer,
-    iterMethod: IterRootMethod,
-    transform: Transform,
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -68,24 +55,25 @@ export const setRenderStateFinishedRendering = (data: RenderStateData) => {
     data.stateData.isRendering = false;
 }
 
-export const newRenderData = (renderSettings: RenderSettings): RenderData => ({
+export const newRenderData = (): RenderData => ({
     startTime: Date.now(),
     row: 0,
     scaleFactor: 5,
-    renderSettings,
 });
 
-export const newFractalData = (formula: string, iterMethod: IterRootMethod, transform: Transform, renderSettings: RenderSettings): FractalData | undefined => {
-    const fz = newPolynomial(formula);
+export const newFractalData = (generalProps: AppGeneralProps): FractalData | undefined => {
+    const { formula } = generalProps;
+
+    const fz = newPolynomial(formula.value);
     if (!fz) return undefined;
 
     const roots = newRoots(fz);
     if (!roots) { fz.free(); return undefined; }
-    setRootColors(roots, renderSettings);
+    setRootColors(generalProps, roots);
 
     const pdb = newImagePixelDataBuffer();
 
-    return { fz, roots, pdb, iterMethod, transform }
+    return { fz, roots, pdb }
 }
 
 export const freeFractalData = (fractalData?: FractalData) => {

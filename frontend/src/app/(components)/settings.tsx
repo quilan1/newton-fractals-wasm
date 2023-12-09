@@ -1,14 +1,14 @@
 import styles from './page.module.css';
 import { ChangeEvent, MouseEvent, useCallback, useEffect, useRef } from 'react';
-import { FractalParams } from './page';
 import { isValidFormula, wasmMemoryUsage } from '../(wasm-wrapper)/util';
-import { classNames, useEventListener } from '../(util)/util';
+import { classNames } from '../(util)/util';
 import { transformIdent } from '../(util)/transform';
 import { useValue } from '../(util)/valued';
 import { usePeriodicFn } from '../(util)/periodic-fn';
-import { ColorScheme } from '../(render)/data';
 import { randomCycle2, randomFormula } from './random-formulas';
 import { IterRootMethod } from '../(wasm-wrapper)/structs';
+import { AppGeneralProps } from './app-props';
+import { ColorScheme } from '../(render)/render';
 
 enum SettingsPanel {
     RENDERING = "Rendering",
@@ -16,7 +16,7 @@ enum SettingsPanel {
     INFO = "Info",
 }
 
-export const Settings = (props: FractalParams) => {
+export const Settings = (props: AppGeneralProps) => {
     const settingsPanel = useValue(SettingsPanel.RENDERING);
 
     const onChangeSettingsPanel = (panel: SettingsPanel) => (_e: MouseEvent<HTMLDivElement>) => { settingsPanel.value = panel; };
@@ -33,7 +33,7 @@ export const Settings = (props: FractalParams) => {
                 {settingsPanel.value == SettingsPanel.RENDERING
                     ? <RenderSettings {...props} />
                     : settingsPanel.value == SettingsPanel.DEBUG
-                        ? <DebugSettings {...props} />
+                        ? <DebugSettings />
                         : <InfoSettings />
                 }
             </div>
@@ -43,7 +43,7 @@ export const Settings = (props: FractalParams) => {
 
 ///////////////////////////////////////////////////////////////////
 
-const RenderSettings = (props: FractalParams) => {
+const RenderSettings = (props: AppGeneralProps) => {
     return (
         <div className={styles.renderSettingsContainer}>
             <FormulaSettings {...props} />
@@ -55,65 +55,24 @@ const RenderSettings = (props: FractalParams) => {
 
 ///////////////////////////////////////////////////////////////////
 
-const FormulaSettings = (props: FractalParams) => {
-    const { formula, iterMethod } = props;
+const FormulaSettings = (props: AppGeneralProps) => {
+    const { formula, iterMethod, curPoint, transform } = props;
     const customRef = useRef<HTMLInputElement>(null);
     const isCustomFormula = useValue(false);
 
-    const reRender = () => {
-        const { transform, render, curPoint } = props;
+    const resetTransform = () => {
         curPoint.value = "";
-        transform.current = transformIdent();
-        render();
+        transform.value = transformIdent();
     }
 
     const onChangeFormula = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
         formula.value = e.target.value;
-        reRender();
+        resetTransform();
     };
 
     const onChangeIterMethod = (e: ChangeEvent<HTMLSelectElement>) => {
         iterMethod.value = e.target.value as IterRootMethod;
-        props.render();
     };
-
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
-    const onKeyDown = (e: KeyboardEvent) => {
-        // Don't trigger this if we're typing in an input or something
-        if (document.activeElement && document.activeElement != document.body) return;
-
-        const iterRootMethods = Object.values(IterRootMethod);
-
-        const indexPolynomial = defaultPolynomials.indexOf(formula.value);
-        const indexIterMethod = iterRootMethods.indexOf(iterMethod.value as IterRootMethod);
-
-        const setIndexPolynomial = (nextIndex: number) => {
-            formula.value = defaultPolynomials[nextIndex];
-            reRender();
-        }
-
-        const setindexIterMethod = (nextIndex: number) => {
-            iterMethod.value = iterRootMethods[nextIndex];
-            props.render();
-        }
-
-        if (e.key == 'ArrowLeft' && indexPolynomial > 0) {
-            e.preventDefault();
-            setIndexPolynomial(indexPolynomial - 1);
-            return;
-        } else if (e.key == 'ArrowRight' && indexPolynomial < defaultPolynomials.length - 1) {
-            e.preventDefault();
-            setIndexPolynomial(indexPolynomial + 1);
-            return;
-        } else if (e.key == 'ArrowUp' && indexIterMethod > 0) {
-            e.preventDefault();
-            setindexIterMethod(indexIterMethod - 1);
-        } else if (e.key == 'ArrowDown' && indexIterMethod < iterRootMethods.length - 1) {
-            e.preventDefault();
-            setindexIterMethod(indexIterMethod + 1);
-        }
-    }
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
 
     const onFocus = useCallback(() => {
         isCustomFormula.value = !defaultPolynomials.includes(formula.value);
@@ -122,10 +81,8 @@ const FormulaSettings = (props: FractalParams) => {
     }, [isCustomFormula, formula.value]);
     useEffect(() => { onFocus(); }, [onFocus, formula.value]);
 
-    useEventListener('keydown', onKeyDown as EventListener, <Element,>() => { return window as unknown as Element });
-
-    const onClickRandomCycle2 = () => { formula.value = randomCycle2(); reRender(); }
-    const onClickRandomFormula = () => { formula.value = randomFormula(); reRender(); }
+    const onClickRandomCycle2 = () => { formula.value = randomCycle2(); resetTransform(); }
+    const onClickRandomFormula = () => { formula.value = randomFormula(); resetTransform(); }
 
     const _isValidFormula = isValidFormula(formula.value);
     const formulaDropdownStyle = classNames(styles, [
@@ -200,34 +157,34 @@ const FormulaSettings = (props: FractalParams) => {
 
 ///////////////////////////////////////////////////////////////////
 
-const RenderPassSettings = (props: FractalParams) => {
-    const { renderSettings: { colorScheme, hueOffset, chromaticity, dropoff, renderRoots, staticHues }, recolor } = props;
+const RenderPassSettings = (props: AppGeneralProps) => {
+    const { colorScheme, hueOffset, chromaticity, dropoff, renderRoots, staticHues } = props;
 
-    const onChangeScheme = (e: ChangeEvent<HTMLSelectElement>) => { colorScheme.value = e.target.value as ColorScheme; recolor(); }
-    const onChangeHueOffset = (e: ChangeEvent<HTMLInputElement>) => { hueOffset.value = Number.parseFloat(e.target.value); recolor(); }
-    const onChangeChromaticity = (e: ChangeEvent<HTMLInputElement>) => { chromaticity.value = Number.parseFloat(e.target.value); recolor(); }
-    const onChangeDropoff = (e: ChangeEvent<HTMLInputElement>) => { dropoff.value = Number.parseFloat(e.target.value); recolor(); }
-    const onChangeDrawRoots = (e: ChangeEvent<HTMLInputElement>) => { renderRoots.value = e.target.checked; recolor(); }
-    const onChangeStaticHues = (e: ChangeEvent<HTMLInputElement>) => { staticHues.value = e.target.checked; recolor(); }
+    const onChangeScheme = (e: ChangeEvent<HTMLSelectElement>) => { colorScheme.value = e.target.value as ColorScheme; }
+    const onChangeHueOffset = (e: ChangeEvent<HTMLInputElement>) => { hueOffset.value = Number.parseFloat(e.target.value); }
+    const onChangeChromaticity = (e: ChangeEvent<HTMLInputElement>) => { chromaticity.value = Number.parseFloat(e.target.value); }
+    const onChangeDropoff = (e: ChangeEvent<HTMLInputElement>) => { dropoff.value = Number.parseFloat(e.target.value); }
+    const onChangeDrawRoots = (e: ChangeEvent<HTMLInputElement>) => { renderRoots.value = e.target.checked; }
+    const onChangeStaticHues = (e: ChangeEvent<HTMLInputElement>) => { staticHues.value = e.target.checked; }
 
     return (
         <div className={styles.renderPassSettings}>
             <label>Color Scheme:</label>
             <select
                 className={styles.colorScheme}
-                value={props.renderSettings.colorScheme.value}
+                value={colorScheme.value}
                 title={desc.colorScheme}
                 onChange={onChangeScheme}>
                 {Object.entries(ColorScheme).map(([k, v]) => <option key={k} value={v}>{v}</option>)}
             </select>
             <label>Hue Offset:</label>
             <input type="range" min="0" max="360" step="1"
-                value={props.renderSettings.hueOffset.value}
+                value={hueOffset.value}
                 title={desc.hueOffset}
                 onChange={onChangeHueOffset} />
             <label>Chromaticity:</label>
             <input type="range" min="0" max="1" step="0.05"
-                value={props.renderSettings.chromaticity.value}
+                value={chromaticity.value}
                 title={desc.chromaticity}
                 onChange={onChangeChromaticity} />
             <label>Shading Curve:</label>
@@ -245,7 +202,7 @@ const RenderPassSettings = (props: FractalParams) => {
 
 ///////////////////////////////////////////////////////////////////
 
-const DebugSettings = (_props: FractalParams) => {
+const DebugSettings = () => {
     const memoryUsage = useValue("");
     usePeriodicFn(100, () => {
         const memoryUsageBytes = wasmMemoryUsage();

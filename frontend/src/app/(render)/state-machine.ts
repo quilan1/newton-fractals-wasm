@@ -1,40 +1,55 @@
+import assert from "assert";
 import { MutableRefObject, useCallback, useRef } from "react";
 import { setterPromise } from "../(util)/util";
 import { drawRoots, recolorCanvasRow, renderToCanvasRow, setRootColors } from "./render";
-import { Transform } from "../(util)/transform";
 import { getNewtonSync } from "../(wasm-wrapper)/consts";
-import { RenderPassFn, RenderSettings, RenderState, RenderStateData, freeFractalData, isRenderStateFinishedRendering, newFractalData, newRenderData, setRenderStateFinishedRendering } from "./data";
+import { RenderPassFn, RenderState, RenderStateData, StateMachineFns, freeFractalData, isRenderStateFinishedRendering, newFractalData, newRenderData, setRenderStateFinishedRendering } from "./data";
 import { CanvasDrawFn } from "../(components)/canvas";
-import assert from "assert";
-import { IterRootMethod } from "../(wasm-wrapper)/structs";
+import { AppGeneralProps } from "../(components)/app-props";
 
 // Main render loop here!
 const renderFn = (context: CanvasRenderingContext2D, data: RenderStateData) => {
-    data.prePassFn(data, context);
+    data.fns.prePassFn(data, context);
     if (isRenderStateFinishedRendering(data)) return;
 
     const msPerFrame = 1000 / 60.0;
 
     const start = Date.now();
     while (Date.now() - start < msPerFrame) {
-        if (!data.passFn(data, context)) break;
+        if (!data.fns.passFn(data, context)) break;
     }
     if (isRenderStateFinishedRendering(data)) return;
 
-    data.postPassFn(data, context);
+    data.fns.postPassFn(data, context);
     if (isRenderStateFinishedRendering(data)) return;
 }
 
-export type RenderFn = (formula: string, iterMethod: IterRootMethod, transform: Transform, renderSettings: RenderSettings) => void;
+export type RenderFn = (generalProps: AppGeneralProps, stateMachine: StateMachineProps) => void;
+export type StateMachineDataRef = MutableRefObject<RenderStateData | undefined>;
 
-export const useFractalDraw = () => {
+export type StateMachineProps = ReturnType<typeof useStateMachine>;
+export const useStateMachine = () => {
+    const data = useRef<RenderStateData | undefined>(undefined);
+    const initFns = useStateMachineDrawFns();
+
+    const stepFn = useCallback<CanvasDrawFn>((context: CanvasRenderingContext2D) => {
+        if (!data.current) return;
+        if (isRenderStateFinishedRendering(data.current)) return;
+        if (!data.current.renderData) return;
+        if (!getNewtonSync()) return;
+        renderFn(context, data.current);
+    }, []);
+
+    return { data, stepFn, initFns };
+}
+
+const useStateMachineDrawFns = () => {
     const [setDone, onDone] = setterPromise<number>();
 
-    const data = useRef<RenderStateData | undefined>(undefined);
     const startTime = useRef(Date.now());
-    const [startRender, recolorRender] = useRenderFns(data, (data: RenderStateData) => {
-        const prePassFn = data.prePassFn;
-        data.prePassFn = (data: RenderStateData, context: CanvasRenderingContext2D) => {
+    const [startRenderFn, recolorRenderFn] = useRenderFns((data: RenderStateData) => {
+        const prePassFn = data.fns.prePassFn;
+        data.fns.prePassFn = (data: RenderStateData, context: CanvasRenderingContext2D) => {
             if (data.stateData.curState != RenderState.DONE) { prePassFn(data, context); return }
 
             setDone(Date.now() - startTime.current);
@@ -43,60 +58,51 @@ export const useFractalDraw = () => {
         startTime.current = Date.now();
     });
 
-    const drawFn = useCallback<CanvasDrawFn>((context: CanvasRenderingContext2D) => {
-        if (!data.current) return;
-        if (isRenderStateFinishedRendering(data.current)) return;
-        if (!data.current.renderData) return;
-        if (!getNewtonSync()) return;
-        renderFn(context, data.current);
-    }, []);
-
-    return { drawFn, startRender, recolorRender, onDone, data: data.current };
+    return { startRenderFn, recolorRenderFn, onDone };
 }
 
-const useRenderFns = (data: MutableRefObject<RenderStateData | undefined>, postFn: (data: RenderStateData) => void): [RenderFn, RenderFn] => {
-    const newRenderFn = useCallback((formula: string, iterMethod: IterRootMethod, transform: Transform, renderSettings: RenderSettings) => {
-        if (data.current == undefined) data.current = newRenderStateData();
+const useRenderFns = (postFn: (data: RenderStateData) => void): [RenderFn, RenderFn] => {
+    const newRenderFn = useCallback((generalProps: AppGeneralProps, stateMachine: StateMachineProps) => {
+        if (!getNewtonSync()) return;
 
-        data.current.renderData = newRenderData(renderSettings);
-        if (getNewtonSync()) {
-            freeFractalData(data.current.fractalData);
-            data.current.fractalData = newFractalData(formula, iterMethod, transform, renderSettings);
-        }
+        const { data } = stateMachine;
+        if (data.current) freeFractalData(data.current.fractalData);
 
-        data.current.stateData = {
+        const fns = newStateMachineFunctions();
+        const renderData = newRenderData();
+        const fractalData = newFractalData(generalProps);
+        const stateData = {
             curState: RenderState.RENDER_PASS,
-            isRendering: !!data.current.fractalData,
+            isRendering: !!fractalData,
         }
 
+        data.current = { fns, generalProps, stateData, renderData, fractalData };
         postFn(data.current);
-    }, [data, postFn]);
+    }, [postFn]);
 
-    const recolorFn = useCallback((_formula: string, _iterMethod: IterRootMethod, _transform: Transform, renderSettings: RenderSettings) => {
+    const recolorFn = useCallback((generalProps: AppGeneralProps, stateMachine: StateMachineProps) => {
+        const { data } = stateMachine;
         assert(data.current?.renderData != undefined && data.current.fractalData != undefined);
+
+        data.current.generalProps = generalProps;
         data.current.renderData.row = 0;
-        data.current.renderData.renderSettings = renderSettings;
         data.current.stateData = {
             curState: RenderState.RECOLOR_PASS,
             isRendering: !!data.current.fractalData,
         }
-        setRootColors(data.current.fractalData.roots, renderSettings);
+        setRootColors(generalProps, data.current.fractalData.roots);
 
         postFn(data.current);
-    }, [data, postFn]);
+    }, [postFn]);
 
     return [newRenderFn, recolorFn];
 }
 
-const newRenderStateData = (): RenderStateData => {
+const newStateMachineFunctions = (): StateMachineFns => {
     return {
         prePassFn: renderPrePass,
         passFn: renderPass,
         postPassFn: postPass,
-        stateData: {
-            curState: RenderState.DONE,
-            isRendering: false,
-        }
     };
 }
 
@@ -156,7 +162,7 @@ const renderPassRecolor: RenderPassFn<boolean> = (data: RenderStateData, context
 
 const postPass: RenderPassFn = (data: RenderStateData, context: CanvasRenderingContext2D) => {
     if (data.stateData.curState == RenderState.DONE) return;
-    if (!(data.renderData?.renderSettings.renderRoots ?? false)) return;
+    if (!data.generalProps.renderRoots.value) return;
 
     drawRoots(data, context);
 }

@@ -3,33 +3,38 @@ import { applyTransforms, invert, transformMany } from "../(util)/transform";
 import { canvasToUnitTransform, toCanvasCenterOrigin } from "../(wasm-wrapper)/transform";
 import { OklchColor, } from "../(wasm-wrapper)/structs";
 import { calculateRow, recolorRow, renderRow } from "../(wasm-wrapper)/rendering";
-import { ColorScheme, RenderSettings, RenderStateData } from "./data";
+import { RenderStateData } from "./data";
 import { Roots } from "@/pkg/newton_wasm";
 import { lerpClamped, toSplitArray } from "../(util)/util";
+import { AppGeneralProps } from "../(components)/app-props";
 
 export const renderToCanvasRow = (data: RenderStateData, context: CanvasRenderingContext2D) => {
     assert(!!data.renderData && !!data.fractalData);
 
-    const { row, scaleFactor, renderSettings } = data.renderData;
-    const { fz, roots, pdb, transform, iterMethod } = data.fractalData;
-    const pdbRow = calculateRow(fz, roots, transform, iterMethod, 1 << scaleFactor, row);
-    renderRow(context, roots, pdb, pdbRow, 1 << scaleFactor, row, renderSettings.dropoff);
+    const { transform, iterMethod, dropoff } = data.generalProps;
+    const { row, scaleFactor } = data.renderData;
+    const { fz, roots, pdb } = data.fractalData;
+    const pdbRow = calculateRow(fz, roots, transform.value, iterMethod.value, 1 << scaleFactor, row);
+    renderRow(context, roots, pdb, pdbRow, 1 << scaleFactor, row, dropoff.value);
     pdbRow.free();
 }
 
 export const recolorCanvasRow = (data: RenderStateData, context: CanvasRenderingContext2D) => {
     assert(!!data.renderData && !!data.fractalData);
 
-    const { row, renderSettings } = data.renderData;
+    const { dropoff } = data.generalProps;
+    const { row } = data.renderData;
     const { roots, pdb } = data.fractalData;
-    recolorRow(context, roots, pdb, row, renderSettings.dropoff);
+    recolorRow(context, roots, pdb, row, dropoff.value);
 }
 
 export const drawRoots = (data: RenderStateData, context: CanvasRenderingContext2D) => {
     if (!data.fractalData) return;
 
-    const { roots, transform } = data.fractalData;
-    const _transform = invert(transformMany(toCanvasCenterOrigin(), canvasToUnitTransform(transform)));
+    const { transform } = data.generalProps;
+    const { roots } = data.fractalData;
+
+    const _transform = invert(transformMany(toCanvasCenterOrigin(), canvasToUnitTransform(transform.value)));
     for (const root of roots.roots()) {
         const { x, y } = applyTransforms(root.re, root.im, _transform);
 
@@ -55,8 +60,14 @@ interface ColorInfo {
     radius: number,
 }
 
-export const setRootColors = (roots: Roots, renderSettings: RenderSettings) => {
-    const { colorScheme, hueOffset, chromaticity, staticHues } = renderSettings;
+export enum ColorScheme {
+    CONTRASTING_HUES = "Contrasting Hues",
+    LINEAR_HUES = "Linear Hues",
+    MONOCHROMATIC = "Monochromatic"
+}
+
+export const setRootColors = (generalProps: AppGeneralProps, roots: Roots) => {
+    const { colorScheme, hueOffset, chromaticity, staticHues } = generalProps;
 
     const complexRoots = roots.roots();
     const radii = complexRoots.map(c => Math.hypot(c.re, c.im));
@@ -65,28 +76,28 @@ export const setRootColors = (roots: Roots, renderSettings: RenderSettings) => {
         radius: radii[i],
         color: {
             h: Math.atan2(c.im, c.re) * 180 / Math.PI,
-            c: lerpClamped(radii[i] / 1.5, 0.01, 0.4 * chromaticity),
+            c: lerpClamped(radii[i] / 1.5, 0.01, 0.4 * chromaticity.value),
         }
     }));
 
     let info: ColorInfo[];
-    switch (colorScheme) {
+    switch (colorScheme.value) {
         case ColorScheme.LINEAR_HUES:
-            info = linearHueColors(colorInfo, staticHues);
+            info = linearHueColors(colorInfo, staticHues.value);
             break;
         case ColorScheme.CONTRASTING_HUES:
-            info = contrastingHueColors(colorInfo, staticHues);
+            info = contrastingHueColors(colorInfo, staticHues.value);
             break;
         case ColorScheme.MONOCHROMATIC:
-            info = monochromaticColors(colorInfo, staticHues);
+            info = monochromaticColors(colorInfo, staticHues.value);
             break;
         default:
-            const _colorScheme: never = colorScheme;
+            const _colorScheme: never = colorScheme.value;
             console.error("Invalid colorScheme:", _colorScheme);
             return;
     }
 
-    info.forEach(i => { i.color.h += hueOffset; });
+    info.forEach(i => { i.color.h += hueOffset.value; });
     info.sort((a, b) => a.rootIndex - b.rootIndex);
 
     const colors = info.map(c => c.color);

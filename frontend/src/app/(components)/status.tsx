@@ -1,7 +1,7 @@
 import styles from './page.module.css';
-import { FractalParams } from './page';
+import { AppGeneralProps } from './app-props';
 
-export const Status = (props: FractalParams) => {
+export const Status = (props: AppGeneralProps) => {
     const { isRendering, curPoint } = props;
 
     const renderStyle = isRendering.value ? styles.isRendering : styles.notRendering;

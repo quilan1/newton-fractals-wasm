@@ -1,19 +1,20 @@
 import styles from './page.module.css';
-import { FractalParams } from "./page";
 import { MouseEvent, RefObject, useCallback, useEffect, useRef } from 'react';
 import { getCanvasSize, getNewtonSync } from '../(wasm-wrapper)/consts';
 import { canvasToUnitTransform, toCanvasCenterOrigin } from '../(wasm-wrapper)/transform';
 import { applyTransforms, scale } from '../(util)/transform';
+import { AppGeneralProps } from './app-props';
 
 export type CanvasDrawFn = (context: CanvasRenderingContext2D, animationFrameId?: number) => void;
 
 export interface CanvasProps extends React.ComponentPropsWithoutRef<"canvas"> {
+    props: AppGeneralProps,
     drawFn: CanvasDrawFn,
-    canvasRef: RefObject<HTMLCanvasElement>,
 }
 
-export const Canvas = (props: FractalParams) => {
-    const canvasRef = useAnimatedCanvas(props.drawFn);
+export const Canvas = (allProps: CanvasProps) => {
+    const { props, drawFn } = allProps;
+    const canvasRef = useAnimatedCanvas(drawFn);
     const { onMouseMove, onMouseLeave } = useOnChanges(props, canvasRef);
 
     return (
@@ -25,19 +26,19 @@ export const Canvas = (props: FractalParams) => {
                 onMouseLeave={onMouseLeave}
                 width={800}
                 height={800}
+                {...props}
             />
         </div>
     );
 }
 
-const useOnChanges = (props: FractalParams, canvasRef: RefObject<HTMLCanvasElement>) => {
+const useOnChanges = (props: AppGeneralProps, canvasRef: RefObject<HTMLCanvasElement>) => {
     const onWheel = useCallback((e: WheelEvent) => {
-        const { transform, render, curPoint } = props;
+        const { transform, curPoint } = props;
         const zoomAdjust = e.deltaY / 1000;
         e.preventDefault();
-        transform.current.scale *= Math.pow(2, zoomAdjust);
+        transform.value.scale *= Math.pow(2, zoomAdjust);
         curPoint.value = "";
-        render();
     }, [props]);
 
     const canvas = canvasRef.current;
@@ -49,13 +50,13 @@ const useOnChanges = (props: FractalParams, canvasRef: RefObject<HTMLCanvasEleme
     }, [onWheel, canvas]);
 
     const onMouseMove = (e: MouseEvent<HTMLCanvasElement>) => {
-        const { isRendering, transform, renderNow, curPoint } = props;
+        const { isRendering, transform, curPoint } = props;
         e.preventDefault();
 
         const newton = getNewtonSync();
         if (!newton) return;
 
-        const _transform = canvasToUnitTransform(transform.current);
+        const _transform = canvasToUnitTransform(transform.value);
         const curPt = applyTransforms(e.nativeEvent.offsetX, e.nativeEvent.offsetY,
             scale(getCanvasSize() / e.currentTarget.clientWidth),   // Scale up to the internal canvas size
             toCanvasCenterOrigin(),
@@ -65,9 +66,8 @@ const useOnChanges = (props: FractalParams, canvasRef: RefObject<HTMLCanvasEleme
 
         if (!(e.buttons & 1)) return;
 
-        transform.current.translate = applyTransforms(-e.movementX, -e.movementY, _transform);
+        transform.value.translate = applyTransforms(-e.movementX, -e.movementY, _transform);
         isRendering.value = false;
-        renderNow();
     }
 
     const onMouseLeave = (_e: MouseEvent<HTMLCanvasElement>) => {

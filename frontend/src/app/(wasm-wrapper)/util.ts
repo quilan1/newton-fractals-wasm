@@ -1,3 +1,4 @@
+import { lerp } from "../(util)/util";
 import { getWasmSync } from "./consts";
 
 export const wasmMemoryUsage = () => {
@@ -18,3 +19,5 @@ export const isValidFormula = (formula: string) => {
     const re = new RegExp(/^(\d+)?z(\^\d+)?$|^(\d+)$/);
     return terms.length > 0 && terms.every(term => term.match(re));
 }
+
+export const transformDropoff = (dropoff: number) => lerp(dropoff, 1.0, 0.15);
