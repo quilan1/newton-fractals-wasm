@@ -2,8 +2,7 @@
 
 ## Overview
 
-This program is a sandbox program I've been using to test & design various functions for rendering with Newton's method and the various other
-root finding algorithms.
+This program is a sandbox program I've been using to test & design various functions for rendering with Newton's method and the various other root finding algorithms.
 
 ## Setup
 
@@ -37,7 +36,7 @@ The Rust crates are inside of the `crates` directory, and the Typescript files a
 
 Newton's Method (or Newton–Raphson's method) is a very simple calculus algorithm for finding zeroes of a function. Starting at a guess, each iteration will then yield results that are closer & closer to one of the roots of the function (where the value is zero). However, the bevhior is also chaotic in many scenarios, resulting in some pretty wild patterns when operated over the complex plane.
 
-For more details about Newton's Method, I recommend reading [The Wiki](https://en.wikipedia.org/wiki/Newton%27s_method) and especially recommend watching 3Blue1Brown's [fantastic video on the subject](https://www.youtube.com/watch?v=-RdOwhmqP5s).
+For more details about Newton's Method, I recommend reading [The Wiki](https://en.wikipedia.org/wiki/Newton%27s_method) and especially recommend watching 3Blue1Brown's [fantastic video on Newton fractals](https://www.youtube.com/watch?v=-RdOwhmqP5s).
 
 ### Basic UI Usage
 
@@ -47,6 +46,12 @@ For more details about Newton's Method, I recommend reading [The Wiki](https://e
 * `Custom`: If you'd like to play around with making your own polynomials, put them here. Valid polynomials are those with integer coefficients and positive exponents of z value. Complex or floating coefficients, math functions, parentheses, etc. are not yet implemented. Perhaps a distant goal.
 * `Random 2-Cycle`: Attempts to generate 5th degree functions with super-attracting critical points. Sometimes this works, and sometimes not. To actually determine if it is a cycle requires analysis of ~25-degree polynomials though, so by chance it is, for now.
 * `Random`: Generates random coefficients for formulas. Truly YOLO generation.
+* `Algorithm`: Various methods of finding roots are employed to create fun fractal images here.
+  * `Newton's Method`: The grand-daddy method of them all. Generates nice chaotic behavior for many formulas. `z -= f(z)/f'(z)`.
+  * `Schröder's Method for Multiple Roots`: A form of corrected Newton method. Generates really beautiful blobs of placidity within turbulent areas of chaos. `z -= f(z)*f'(z)/(f'(z)^2 - f(z)*f''(z))`. See: McNamee, J.M. Numerical Methods for Roots of Polynomials, Part I, pg. 153.
+  * `Schröder's Method #2`: Another method, allegedly derived by Schröder, but I can't find direct citations for it yet. Generates less chaos than Newton's Method. `z -= f(z)/f'(z) - f''(z)*f(z)^2/(2*f'(z)^3)`.
+  * `Halley's Method`: The second of the Householder methods. Like Schroder's Method #2, generates considerably less chaos than Newton. `z -= 2*f(z)*f'(z) / (2*f'(z)^2 - f(z)*f''(z))`.
+  * `Steffensen's Method`: A fixed-point iteration algorithm, most points do not converge, so with almost all formulas, you'll be facing a black screen with some speckles of color. Generally only looks nice with low-order polynomials, or areas where Newton's Method produces little chaos. `z -= f(z)^2 / (f(f(z) + z) - f(z))`.
 
 #### Rendering
 
@@ -54,7 +59,7 @@ For more details about Newton's Method, I recommend reading [The Wiki](https://e
   * `Contrasting Hues`: Colors are initially chosen via the `Linear Hue` scheme. Once that's done though, every other hue is interleaved to produce maximal adjacent hue differences. This yields a highly contrasting set of hues, rotationally.
   * `Linear Hue`: Every root gets a unique hue based on the root's polar angle & radius. 'Red' is at 0° (positive real axis), 'Green' at 120°, 'Blue' at 240°. The radius of the root determines the chromaticity of the root; roots closer to the origin will yield paler colors than those further away.
   * `Monochromatic`: A hue is chosen based off of the angle of the root closest to 0° in the positive direction. All other roots will use this hue for their color, however they will still have chromaticity based off of their radius.
-* `Hue Offset`: With the color schemes, all roots will have an associated hue. By adjusting the hue offset, each othese hues will be shifted around the color-wheel.
+* `Hue Offset`: With the color schemes, all roots will have an associated hue. By adjusting the hue offset, each of these hues will be shifted around the color-wheel.
 * `Chromaticity`: Root colors' chromaticity will be scaled by this factor. To the left, all colors will become black & white, and to the right all colors will become super saturated. Because this operates in the LCH colorspace, this may achieve unintended results, however.
 * `Shading Curve`: The lightness of each point is determined by how long it takes to reach a root; black signifies that it never reached the root. This value sets the exponential curve of the lightness dropoff, to achieve a shaded look to the colors.
 * `Show Roots`: Pretty simply, draws a circle around the roots of the function. For some functions, one may need to zoom out to find them.

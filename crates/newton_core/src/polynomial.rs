@@ -10,6 +10,7 @@ pub trait TPolynomial:
     + Into<Complex32>
     + From<f32>
     + PartialEq
+    + Default
     + std::ops::Mul<Complex32, Output = Complex32>
     + std::ops::Mul<f32, Output = Self>
     + std::ops::DivAssign
@@ -26,10 +27,12 @@ impl Parseable for f32 {}
 ///////////////////////////////////////////////////////////////////
 
 /// Polynomial terms and their derivatives
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Polynomial<T> {
     function: Vec<PolynomialTerm<T>>,
     derivative: Vec<PolynomialTerm<T>>,
+    derivative2: Vec<PolynomialTerm<T>>,
+    derivative3: Vec<PolynomialTerm<T>>,
 }
 
 pub type FPolynomial = Polynomial<f32>;
@@ -46,6 +49,16 @@ impl<T: TPolynomial> Polynomial<T> {
     // Evaluates the derivative at z
     pub fn f1(&self, z: Complex32) -> Complex32 {
         Self::eval_terms(&self.derivative, z)
+    }
+
+    // Evaluates the second derivative at z
+    pub fn f2(&self, z: Complex32) -> Complex32 {
+        Self::eval_terms(&self.derivative2, z)
+    }
+
+    // Evaluates the third derivative at z
+    pub fn f3(&self, z: Complex32) -> Complex32 {
+        Self::eval_terms(&self.derivative3, z)
     }
 
     /// Sums C*z^p polynomial terms
@@ -75,6 +88,19 @@ impl<T: TPolynomial> Polynomial<T> {
         self.function.iter().map(|t| t.power).max().unwrap() as usize
     }
 
+    fn add_term(&mut self, cp: PolynomialTerm<T>) {
+        if let Some(cp) = cp.derivative() {
+            if let Some(cp) = cp.derivative() {
+                if let Some(cp) = cp.derivative() {
+                    self.derivative3.push(cp);
+                }
+                self.derivative2.push(cp);
+            }
+            self.derivative.push(cp);
+        }
+        self.function.push(cp);
+    }
+
     // Turns poly from a*z^n + b*z^[n-k] + ... into z^n + (b/a)*z^[n-k] + ...
     pub fn normalize(&mut self) {
         let coef = self
@@ -84,13 +110,16 @@ impl<T: TPolynomial> Polynomial<T> {
             .unwrap()
             .coefficient;
 
-        for t in &mut self.function {
-            t.coefficient /= coef;
-        }
-
-        for t in &mut self.derivative {
-            t.coefficient /= coef;
-        }
+        self.function.iter_mut().for_each(|t| t.coefficient /= coef);
+        self.derivative
+            .iter_mut()
+            .for_each(|t| t.coefficient /= coef);
+        self.derivative2
+            .iter_mut()
+            .for_each(|t| t.coefficient /= coef);
+        self.derivative3
+            .iter_mut()
+            .for_each(|t| t.coefficient /= coef);
     }
 
     pub fn is_constant(&self) -> bool {
@@ -103,8 +132,7 @@ impl<T: TPolynomial> Polynomial<T> {
 impl<T: TPolynomial + Parseable> Polynomial<T> {
     /// Parses out a polynomial from a string
     pub fn parse(function_str: &str) -> Result<Self> {
-        let mut function = Vec::new();
-        let mut derivative = Vec::new();
+        let mut new_self = Self::default();
 
         let function_str = function_str.replace([' ', '(', ')', '*'], "");
         let mut function_str = function_str.replace("+-", "-");
@@ -132,35 +160,22 @@ impl<T: TPolynomial + Parseable> Polynomial<T> {
         let minus = minus.into_iter().flatten().collect::<Vec<_>>();
         // println!("Plus: {plus:?}, Minus: {minus:?}");
 
-        for term in plus {
-            let Some(cp) = PolynomialTerm::parse(term, 1.)? else {
-                continue;
-            };
+        plus.into_iter()
+            .filter_map(|term| PolynomialTerm::parse(term, 1.).ok())
+            .flatten()
+            .for_each(|cp| new_self.add_term(cp));
 
-            if let Some(derivative_cp) = cp.derivative() {
-                derivative.push(derivative_cp);
-            }
-            function.push(cp);
-        }
+        minus
+            .into_iter()
+            .filter_map(|term| PolynomialTerm::parse(term, -1.).ok())
+            .flatten()
+            .for_each(|cp| new_self.add_term(cp));
 
-        for term in minus {
-            let Some(cp) = PolynomialTerm::parse(term, -1.)? else {
-                continue;
-            };
-            if let Some(derivative_cp) = cp.derivative() {
-                derivative.push(derivative_cp);
-            }
-            function.push(cp);
-        }
-
-        if function.is_empty() {
+        if new_self.function.is_empty() {
             bail!("Empty function");
         }
 
-        Ok(Self {
-            function,
-            derivative,
-        })
+        Ok(new_self)
     }
 }
 
@@ -183,19 +198,11 @@ impl<T: TPolynomial> From<Vec<T>> for Polynomial<T> {
 
 impl<T: TPolynomial> From<Vec<(T, i32)>> for Polynomial<T> {
     fn from(terms: Vec<(T, i32)>) -> Self {
-        let mut function = Vec::new();
-        let mut derivative = Vec::new();
+        let mut new_self = Self::default();
         for (c, p) in terms {
-            function.push(PolynomialTerm::new(c, p));
-            if p > 0 {
-                derivative.push(PolynomialTerm::new(c * p as f32, p - 1));
-            }
+            new_self.add_term(PolynomialTerm::new(c, p));
         }
-
-        Self {
-            function,
-            derivative,
-        }
+        new_self
     }
 }
 
@@ -210,16 +217,10 @@ impl<T: TPolynomial> From<Polynomial<T>> for Vec<(T, i32)> {
 impl<T: TPolynomial> From<&Polynomial<T>> for CPolynomial {
     fn from(fz: &Polynomial<T>) -> Self {
         Self {
-            function: fz
-                .function
-                .iter()
-                .map(|term| PolynomialTerm::new(term.coefficient.into(), term.power))
-                .collect(),
-            derivative: fz
-                .derivative
-                .iter()
-                .map(|term| PolynomialTerm::new(term.coefficient.into(), term.power))
-                .collect(),
+            function: fz.function.iter().map(PolynomialTerm::from).collect(),
+            derivative: fz.derivative.iter().map(PolynomialTerm::from).collect(),
+            derivative2: fz.derivative2.iter().map(PolynomialTerm::from).collect(),
+            derivative3: fz.derivative3.iter().map(PolynomialTerm::from).collect(),
         }
     }
 }
@@ -241,6 +242,11 @@ mod tests {
             terms_to_vec(&fz.derivative),
             vec![(5.0, 4), (9.0, 2), (-2.0, 1), (-2.0, 0)]
         );
+        assert_eq!(
+            terms_to_vec(&fz.derivative2),
+            vec![(20.0, 3), (18.0, 1), (-2.0, 0)]
+        );
+        assert_eq!(terms_to_vec(&fz.derivative3), vec![(60.0, 2), (18.0, 0)]);
         Ok(())
     }
 

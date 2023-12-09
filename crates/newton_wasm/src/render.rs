@@ -25,6 +25,7 @@ pub fn calculate_row(
     fz: &Polynomial,
     roots: &Roots,
     affine_transform: JsTransform,
+    method: u32,
     render_scale: usize,
     row: usize,
 ) -> Result<PixelDataBuffer, JsError> {
@@ -33,14 +34,54 @@ pub fn calculate_row(
 
     let affine_transform: Transform = affine_transform.js_try_into()?;
     let (z, units_per_pixel_scaled) = calculate_z_start(affine_transform.scale, row, num_pixels);
-    newton_core::calculate_row(
-        &fz.poly,
-        &roots.0.roots,
-        z + Complex32::new(affine_transform.translate.x, affine_transform.translate.y),
+
+    let fz = &fz.poly;
+    let roots = &roots.0.roots;
+    let z = z + Complex32::new(affine_transform.translate.x, affine_transform.translate.y);
+
+    calculate_row_method(
+        method,
+        fz,
+        roots,
+        z,
         units_per_pixel_scaled,
         &mut pixel_data,
-    );
+    )?;
+
     Ok(PixelDataBuffer::new(pixel_data))
+}
+
+fn calculate_row_method(
+    method: u32,
+    fz: &newton_core::Polynomial,
+    roots: &[Complex32],
+    z: Complex32,
+    units_per_pixel_scaled: f32,
+    pixel_data: &mut [PixelData],
+) -> Result<(), JsError> {
+    macro_rules! calc_row {
+        ($iter:ident, $fz:ident, $roots:ident, $z: ident, $upps: ident, $pdata: ident) => {
+            newton_core::calculate_row::<_, newton_core::calculate::$iter>(
+                $fz, $roots, $z, $upps, $pdata,
+            )
+        };
+    }
+
+    let upps = units_per_pixel_scaled;
+    match method {
+        0 => calc_row!(NewtonsMethod, fz, roots, z, upps, pixel_data),
+        1 => calc_row!(SchroedersMethod, fz, roots, z, upps, pixel_data),
+        2 => calc_row!(SchroedersMethod2, fz, roots, z, upps, pixel_data),
+        3 => calc_row!(HalleysMethod, fz, roots, z, upps, pixel_data),
+        4 => calc_row!(SteffensensMethod, fz, roots, z, upps, pixel_data),
+        _ => {
+            return Err(JsError::new(&format!(
+                "Invalid root iter method type: {method}"
+            )))
+        }
+    }
+
+    Ok(())
 }
 
 fn calculate_z_start(zoom: f32, row: usize, num_pixels: usize) -> (Complex32, f32) {

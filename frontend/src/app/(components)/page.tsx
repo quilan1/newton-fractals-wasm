@@ -12,6 +12,7 @@ import { Settings, defaultPolynomials } from './settings';
 import { Status } from './status';
 import { Canvas } from './canvas';
 import { ColorScheme, RenderSettings, RenderState } from '../(render)/data';
+import { IterRootMethod } from '../(wasm-wrapper)/structs';
 
 export default function Home() {
     const props = useFractals();
@@ -33,6 +34,7 @@ export type FractalParams = ReturnType<typeof useFractals>;
 const useFractals = () => {
     const { drawFn, startRender, recolorRender, onDone, data } = useFractalDraw();
     const formula = useValue(defaultPolynomials[0]);
+    const iterMethod = useValue(IterRootMethod.NewtonsMethod);
     const curPoint = useValue("");
     const isRendering = useValue(false);
     const transform = useRef(transformIdent());
@@ -58,7 +60,7 @@ const useFractals = () => {
             renderRoots: renderRoots.value,
             staticHues: staticHues.value,
         };
-        fn(formula.value, transform.current, renderSettings);
+        fn(formula.value, iterMethod.value, transform.current, renderSettings);
     }
 
     const renderNow = () => { beginRender(startRender); };
@@ -81,7 +83,7 @@ const useFractals = () => {
         staticHues,
     };
 
-    return { drawFn, render, renderNow, recolor, isRendering, formula, curPoint, transform, renderSettings };
+    return { drawFn, render, renderNow, recolor, isRendering, formula, curPoint, transform, iterMethod, renderSettings };
 }
 
 const useInitializePage = (fn: () => void) => {

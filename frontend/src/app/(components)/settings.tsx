@@ -8,6 +8,7 @@ import { useValue } from '../(util)/valued';
 import { usePeriodicFn } from '../(util)/periodic-fn';
 import { ColorScheme } from '../(render)/data';
 import { randomCycle2, randomFormula } from './random-formulas';
+import { IterRootMethod } from '../(wasm-wrapper)/structs';
 
 enum SettingsPanel {
     RENDERING = "Rendering",
@@ -55,8 +56,7 @@ const RenderSettings = (props: FractalParams) => {
 ///////////////////////////////////////////////////////////////////
 
 const FormulaSettings = (props: FractalParams) => {
-    const { formula } = props;
-    const dropdownRef = useRef<HTMLSelectElement>(null);
+    const { formula, iterMethod } = props;
     const customRef = useRef<HTMLInputElement>(null);
     const isCustomFormula = useValue(false);
 
@@ -68,39 +68,56 @@ const FormulaSettings = (props: FractalParams) => {
     }
 
     const onChangeFormula = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-        const { formula } = props;
         formula.value = e.target.value;
         reRender();
     };
 
+    const onChangeIterMethod = (e: ChangeEvent<HTMLSelectElement>) => {
+        iterMethod.value = e.target.value as IterRootMethod;
+        props.render();
+    };
+
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const onKeyDown = (e: KeyboardEvent) => {
-        if (!dropdownRef.current) return;
+        // Don't trigger this if we're typing in an input or something
         if (document.activeElement && document.activeElement != document.body) return;
 
-        const index = defaultPolynomials.indexOf(dropdownRef.current.value);
-        if (index < 0) return;
+        const iterRootMethods = Object.values(IterRootMethod);
 
-        let nextIndex: number;
-        if (e.key == 'ArrowLeft') {
-            e.preventDefault();
-            if (index == 0) return;
-            nextIndex = index - 1;
-        } else if (e.key == 'ArrowRight') {
-            e.preventDefault();
-            nextIndex = index + 1;
-            if (index == defaultPolynomials.length - 1) return;
-        } else {
-            return;
+        const indexPolynomial = defaultPolynomials.indexOf(formula.value);
+        const indexIterMethod = iterRootMethods.indexOf(iterMethod.value as IterRootMethod);
+
+        const setIndexPolynomial = (nextIndex: number) => {
+            formula.value = defaultPolynomials[nextIndex];
+            reRender();
         }
 
-        formula.value = defaultPolynomials[nextIndex];
-        dropdownRef.current.selectedIndex = nextIndex;
-        reRender();
+        const setindexIterMethod = (nextIndex: number) => {
+            iterMethod.value = iterRootMethods[nextIndex];
+            props.render();
+        }
+
+        if (e.key == 'ArrowLeft' && indexPolynomial > 0) {
+            e.preventDefault();
+            setIndexPolynomial(indexPolynomial - 1);
+            return;
+        } else if (e.key == 'ArrowRight' && indexPolynomial < defaultPolynomials.length - 1) {
+            e.preventDefault();
+            setIndexPolynomial(indexPolynomial + 1);
+            return;
+        } else if (e.key == 'ArrowUp' && indexIterMethod > 0) {
+            e.preventDefault();
+            setindexIterMethod(indexIterMethod - 1);
+        } else if (e.key == 'ArrowDown' && indexIterMethod < iterRootMethods.length - 1) {
+            e.preventDefault();
+            setindexIterMethod(indexIterMethod + 1);
+        }
     }
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
 
     const onFocus = useCallback(() => {
         isCustomFormula.value = !defaultPolynomials.includes(formula.value);
-        if (!customRef.current || !dropdownRef.current || !document.activeElement) return;
+        if (!customRef.current || !document.activeElement) return;
         isCustomFormula.value ||= (document.activeElement == customRef.current);
     }, [isCustomFormula, formula.value]);
     useEffect(() => { onFocus(); }, [onFocus, formula.value]);
@@ -130,8 +147,7 @@ const FormulaSettings = (props: FractalParams) => {
                 title={desc.formula}
                 onChange={onChangeFormula}
                 onFocus={onFocus}
-                onBlur={onFocus}
-                ref={dropdownRef}>
+                onBlur={onFocus}>
                 {defaultPolynomials.map(f => <option key={f} value={f}>{f}</option>)}
             </select>
 
@@ -143,9 +159,7 @@ const FormulaSettings = (props: FractalParams) => {
                 title={desc.custom}
                 onChange={onChangeFormula}
                 onFocus={onFocus}
-                onBlur={onFocus}
-                ref={customRef}
-            />
+                onBlur={onFocus} />
             <button
                 className={styles.randomFormula}
                 title={desc.randomCycle2}
@@ -175,6 +189,11 @@ const FormulaSettings = (props: FractalParams) => {
                     </g>
                 </svg>
             </button>
+
+            <label>Algorithm:</label>
+            <select className={styles.iterMethod} value={iterMethod.value} title={desc.iterMethod} onChange={onChangeIterMethod}>
+                {Object.entries(IterRootMethod).map(([k, v]) => <option key={k} value={v}>{v}</option>)}
+            </select>
         </div>
     );
 }
@@ -256,7 +275,7 @@ const InfoSettings = () => {
             <p>
                 The <span>mouse wheel</span> may be used to zoom in/out and the mouse may reposition by <span>click-dragging</span> the
                 image. The pre-selected functions may be switched between by pressing the <span>left</span> or <span>right</span> keyboard
-                arrow.
+                arrows. The algorithm method may be switched between by pressing the <span>up</span> or <span>down</span> keyboard arrows.
             </p>
             <p>
                 For more detailed usage information, as well as other resources, consult
@@ -271,6 +290,7 @@ const InfoSettings = () => {
 const desc = {
     formula: 'Pre-screened interesting polynomial formulas',
     custom: 'Enter in any integer-coefficient polynomial',
+    iterMethod: 'Change the root iteration algorithm (see README.md link in Info tab)',
     randomCycle2: 'Attempt to generate a 2-Cycle super-attracting function',
     randomFormula: 'Generate random coefficients',
     colorScheme: 'Change how the polynomial roots are colored',
@@ -324,4 +344,6 @@ export const defaultPolynomials = [
     'z^6 - 4z^4 + 4z^2 - 4',
     'z^6 - 4z^4 + 6z^2 + 3',
     'z^6 - 4z^4 + 6z^2 + 4',
+
+    'z^5 - z^2' // For viewing with Schröder's method
 ];

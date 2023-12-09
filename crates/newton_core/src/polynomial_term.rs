@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use num_complex::Complex32;
 
 use crate::polynomial::{Parseable, TPolynomial};
 
@@ -24,6 +25,29 @@ impl<T: TPolynomial> PolynomialTerm<T> {
             _ => Some(Self {
                 coefficient: self.coefficient * self.power as f32,
                 power: self.power - 1,
+            }),
+        }
+    }
+
+    pub fn derivative2(&self) -> Option<Self> {
+        match self.power {
+            0..=1 => None,
+            _ => Some(Self {
+                coefficient: self.coefficient * (self.power - 1) as f32 * self.power as f32,
+                power: self.power - 2,
+            }),
+        }
+    }
+
+    pub fn derivative3(&self) -> Option<Self> {
+        match self.power {
+            0..=2 => None,
+            _ => Some(Self {
+                coefficient: self.coefficient
+                    * (self.power - 2) as f32
+                    * (self.power - 1) as f32
+                    * self.power as f32,
+                power: self.power - 3,
             }),
         }
     }
@@ -80,6 +104,15 @@ impl<T: TPolynomial> From<PolynomialTerm<T>> for (T, i32) {
 impl<T: TPolynomial> From<&PolynomialTerm<T>> for (T, i32) {
     fn from(polynomial_term: &PolynomialTerm<T>) -> Self {
         (polynomial_term.coefficient, polynomial_term.power)
+    }
+}
+
+impl<T: TPolynomial> From<&PolynomialTerm<T>> for PolynomialTerm<Complex32> {
+    fn from(polynomial_term: &PolynomialTerm<T>) -> Self {
+        Self {
+            coefficient: polynomial_term.coefficient.into(),
+            power: polynomial_term.power,
+        }
     }
 }
 

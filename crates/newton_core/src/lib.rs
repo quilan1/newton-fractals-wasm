@@ -1,4 +1,4 @@
-mod calculate;
+pub mod calculate;
 mod colors;
 mod lerp;
 mod pixel_data;
@@ -8,7 +8,7 @@ mod roots;
 
 ///////////////////////////////////////////////////////////////////
 
-pub use calculate::calculate_row;
+pub use calculate::{calculate_row, IterRoot};
 pub use colors::{brightness_transform, calc_luminance_max, pixel_color};
 pub use lerp::Lerp;
 pub use pixel_data::{PixelData, PixelDataDetail};

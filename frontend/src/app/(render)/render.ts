@@ -11,8 +11,8 @@ export const renderToCanvasRow = (data: RenderStateData, context: CanvasRenderin
     assert(!!data.renderData && !!data.fractalData);
 
     const { row, scaleFactor, renderSettings } = data.renderData;
-    const { fz, roots, pdb, transform } = data.fractalData;
-    const pdbRow = calculateRow(fz, roots, transform, 1 << scaleFactor, row);
+    const { fz, roots, pdb, transform, iterMethod } = data.fractalData;
+    const pdbRow = calculateRow(fz, roots, transform, iterMethod, 1 << scaleFactor, row);
     renderRow(context, roots, pdb, pdbRow, 1 << scaleFactor, row, renderSettings.dropoff);
     pdbRow.free();
 }

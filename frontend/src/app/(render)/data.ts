@@ -1,6 +1,6 @@
 import { PixelDataBuffer, Polynomial, Roots } from "@/pkg/newton_wasm";
 import { Transform } from "../(util)/transform";
-import { newPolynomial, newRoots } from "../(wasm-wrapper)/structs";
+import { IterRootMethod, newPolynomial, newRoots } from "../(wasm-wrapper)/structs";
 import { setRootColors } from "./render";
 import { newImagePixelDataBuffer } from "../(wasm-wrapper)/rendering";
 
@@ -54,6 +54,7 @@ export interface FractalData {
     fz: Polynomial,
     roots: Roots,
     pdb: PixelDataBuffer,
+    iterMethod: IterRootMethod,
     transform: Transform,
 }
 
@@ -74,7 +75,7 @@ export const newRenderData = (renderSettings: RenderSettings): RenderData => ({
     renderSettings,
 });
 
-export const newFractalData = (formula: string, transform: Transform, renderSettings: RenderSettings): FractalData | undefined => {
+export const newFractalData = (formula: string, iterMethod: IterRootMethod, transform: Transform, renderSettings: RenderSettings): FractalData | undefined => {
     const fz = newPolynomial(formula);
     if (!fz) return undefined;
 
@@ -84,7 +85,7 @@ export const newFractalData = (formula: string, transform: Transform, renderSett
 
     const pdb = newImagePixelDataBuffer();
 
-    return { fz, roots, pdb, transform }
+    return { fz, roots, pdb, iterMethod, transform }
 }
 
 export const freeFractalData = (fractalData?: FractalData) => {

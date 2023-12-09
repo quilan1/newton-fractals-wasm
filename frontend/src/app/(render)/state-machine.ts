@@ -6,6 +6,7 @@ import { getNewtonSync } from "../(wasm-wrapper)/consts";
 import { RenderPassFn, RenderSettings, RenderState, RenderStateData, freeFractalData, isRenderStateFinishedRendering, newFractalData, newRenderData, setRenderStateFinishedRendering } from "./data";
 import { CanvasDrawFn } from "../(components)/canvas";
 import assert from "assert";
+import { IterRootMethod } from "../(wasm-wrapper)/structs";
 
 // Main render loop here!
 const renderFn = (context: CanvasRenderingContext2D, data: RenderStateData) => {
@@ -24,7 +25,7 @@ const renderFn = (context: CanvasRenderingContext2D, data: RenderStateData) => {
     if (isRenderStateFinishedRendering(data)) return;
 }
 
-export type RenderFn = (formula: string, transform: Transform, renderSettings: RenderSettings) => void;
+export type RenderFn = (formula: string, iterMethod: IterRootMethod, transform: Transform, renderSettings: RenderSettings) => void;
 
 export const useFractalDraw = () => {
     const [setDone, onDone] = setterPromise<number>();
@@ -54,13 +55,13 @@ export const useFractalDraw = () => {
 }
 
 const useRenderFns = (data: MutableRefObject<RenderStateData | undefined>, postFn: (data: RenderStateData) => void): [RenderFn, RenderFn] => {
-    const newRenderFn = useCallback((formula: string, transform: Transform, renderSettings: RenderSettings) => {
+    const newRenderFn = useCallback((formula: string, iterMethod: IterRootMethod, transform: Transform, renderSettings: RenderSettings) => {
         if (data.current == undefined) data.current = newRenderStateData();
 
         data.current.renderData = newRenderData(renderSettings);
         if (getNewtonSync()) {
             freeFractalData(data.current.fractalData);
-            data.current.fractalData = newFractalData(formula, transform, renderSettings);
+            data.current.fractalData = newFractalData(formula, iterMethod, transform, renderSettings);
         }
 
         data.current.stateData = {
@@ -71,7 +72,7 @@ const useRenderFns = (data: MutableRefObject<RenderStateData | undefined>, postF
         postFn(data.current);
     }, [data, postFn]);
 
-    const recolorFn = useCallback((_formula: string, _transform: Transform, renderSettings: RenderSettings) => {
+    const recolorFn = useCallback((_formula: string, _iterMethod: IterRootMethod, _transform: Transform, renderSettings: RenderSettings) => {
         assert(data.current?.renderData != undefined && data.current.fractalData != undefined);
         data.current.renderData.row = 0;
         data.current.renderData.renderSettings = renderSettings;
