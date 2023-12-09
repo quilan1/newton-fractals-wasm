@@ -8,7 +8,7 @@ import { usePeriodicFn } from '../(util)/periodic-fn';
 import { randomCycle2, randomFormula } from './random-formulas';
 import { IterRootMethod } from '../(wasm-wrapper)/structs';
 import { AppGeneralProps } from './app-props';
-import { ColorScheme } from '../(render)/render';
+import { ColorScheme } from '../(state-machine)/render';
 
 enum SettingsPanel {
     RENDERING = "Rendering",

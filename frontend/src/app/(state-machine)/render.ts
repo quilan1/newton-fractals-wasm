@@ -2,7 +2,7 @@ import assert from "assert";
 import { applyTransforms, invert, transformMany } from "../(util)/transform";
 import { canvasToUnitTransform, toCanvasCenterOrigin } from "../(wasm-wrapper)/transform";
 import { OklchColor, } from "../(wasm-wrapper)/structs";
-import { calculateRow, recolorRow, renderRow } from "../(wasm-wrapper)/rendering";
+import { calculateRow, recolorRow, renderRow } from "../(wasm-wrapper)/wrapper";
 import { RenderStateData } from "./data";
 import { Roots } from "@/pkg/newton_wasm";
 import { lerpClamped, toSplitArray } from "../(util)/util";

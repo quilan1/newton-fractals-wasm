@@ -3,7 +3,7 @@ import { MutableRefObject, useCallback, useRef } from "react";
 import { setterPromise } from "../(util)/util";
 import { drawRoots, recolorCanvasRow, renderToCanvasRow, setRootColors } from "./render";
 import { getNewtonSync } from "../(wasm-wrapper)/consts";
-import { RenderPassFn, RenderState, RenderStateData, StateMachineFns, freeFractalData, isRenderStateFinishedRendering, newFractalData, newRenderData, setRenderStateFinishedRendering } from "./data";
+import { RenderPassFn, State, RenderStateData, StateMachineFns, freeFractalData, isRenderStateFinishedRendering, newFractalData, newRenderData, setRenderStateFinishedRendering } from "./data";
 import { CanvasDrawFn } from "../(components)/canvas";
 import { AppGeneralProps } from "../(components)/app-props";
 
@@ -50,7 +50,7 @@ const useStateMachineDrawFns = () => {
     const [startRenderFn, recolorRenderFn] = useRenderFns((data: RenderStateData) => {
         const prePassFn = data.fns.prePassFn;
         data.fns.prePassFn = (data: RenderStateData, context: CanvasRenderingContext2D) => {
-            if (data.stateData.curState != RenderState.DONE) { prePassFn(data, context); return }
+            if (data.state != State.DONE) { prePassFn(data, context); return }
 
             setDone(Date.now() - startTime.current);
             setRenderStateFinishedRendering(data);
@@ -71,12 +71,10 @@ const useRenderFns = (postFn: (data: RenderStateData) => void): [RenderFn, Rende
         const fns = newStateMachineFunctions();
         const renderData = newRenderData();
         const fractalData = newFractalData(generalProps);
-        const stateData = {
-            curState: RenderState.RENDER_PASS,
-            isRendering: !!fractalData,
-        }
+        const state = State.RENDER_PASS;
+        generalProps.isRendering.value = !!fractalData;
 
-        data.current = { fns, generalProps, stateData, renderData, fractalData };
+        data.current = { fns, generalProps, state, renderData, fractalData };
         postFn(data.current);
     }, [postFn]);
 
@@ -86,10 +84,9 @@ const useRenderFns = (postFn: (data: RenderStateData) => void): [RenderFn, Rende
 
         data.current.generalProps = generalProps;
         data.current.renderData.row = 0;
-        data.current.stateData = {
-            curState: RenderState.RECOLOR_PASS,
-            isRendering: !!data.current.fractalData,
-        }
+        data.current.state = State.RECOLOR_PASS;
+        data.current.generalProps.isRendering.value = true;
+
         setRootColors(generalProps, data.current.fractalData.roots);
 
         postFn(data.current);
@@ -107,20 +104,20 @@ const newStateMachineFunctions = (): StateMachineFns => {
 }
 
 const renderPrePass: RenderPassFn = (data: RenderStateData, _context: CanvasRenderingContext2D) => {
-    if (data.stateData.curState == RenderState.DONE) return;
+    if (data.state == State.DONE) return;
     if (!data.renderData || !data.fractalData) setRenderStateFinishedRendering(data);
 }
 
 const renderPass: RenderPassFn<boolean> = (data: RenderStateData, context: CanvasRenderingContext2D) => {
-    if (data.stateData.curState == RenderState.DONE) return false;
+    if (data.state == State.DONE) return false;
 
-    switch (data.stateData.curState) {
-        case RenderState.RENDER_PASS:
+    switch (data.state) {
+        case State.RENDER_PASS:
             return renderPassRender(data, context);
-        case RenderState.RECOLOR_PASS:
+        case State.RECOLOR_PASS:
             return renderPassRecolor(data, context);
         default:
-            const curState: never = data.stateData.curState;
+            const curState: never = data.state;
             console.error("Invalid render state:", curState);
             return false;
     }
@@ -131,7 +128,7 @@ const renderPassRender: RenderPassFn<boolean> = (data: RenderStateData, context:
 
     if (data.renderData.row >= context.canvas.height) {
         if (data.renderData.scaleFactor == 0) {
-            data.stateData.curState = RenderState.DONE;
+            data.state = State.DONE;
             return false;
         }
 
@@ -150,7 +147,7 @@ const renderPassRecolor: RenderPassFn<boolean> = (data: RenderStateData, context
     assert(!!data.renderData && !!data.fractalData);
 
     if (data.renderData.row >= context.canvas.height) {
-        data.stateData.curState = RenderState.DONE;
+        data.state = State.DONE;
         return false;
     }
 
@@ -161,7 +158,7 @@ const renderPassRecolor: RenderPassFn<boolean> = (data: RenderStateData, context
 }
 
 const postPass: RenderPassFn = (data: RenderStateData, context: CanvasRenderingContext2D) => {
-    if (data.stateData.curState == RenderState.DONE) return;
+    if (data.state == State.DONE) return;
     if (!data.generalProps.renderRoots.value) return;
 
     drawRoots(data, context);

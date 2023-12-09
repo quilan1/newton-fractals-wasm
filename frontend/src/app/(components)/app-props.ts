@@ -1,13 +1,13 @@
-import { RenderState } from "../(render)/data";
+import { State } from "../(state-machine)/data";
 import { transformIdent } from "../(util)/transform";
 import { useValue } from "../(util)/valued";
 import { IterRootMethod } from "../(wasm-wrapper)/structs";
 import { defaultPolynomials } from "./settings";
-import { RenderFn, StateMachineProps, useStateMachine } from "../(render)/state-machine";
+import { RenderFn, StateMachineProps, useStateMachine } from "../(state-machine)/state-machine";
 import { isValidFormula } from "../(wasm-wrapper)/util";
 import { useDeferredFnExec } from "../(util)/deferred-fn";
 import { useEffect } from "react";
-import { ColorScheme } from "../(render)/render";
+import { ColorScheme } from "../(state-machine)/render";
 import { useEventListener } from "../(util)/util";
 
 export type AppGeneralProps = ReturnType<typeof useAppGeneralProps>;
@@ -71,7 +71,8 @@ export const useAppDrawFns = (generalProps: AppGeneralProps, stateMachine: State
     const recolorNowFn = () => {
         const data = stateMachine.data.current;
         if (!data) return;
-        if (data.stateData.curState == RenderState.RENDER_PASS) { renderNowFn(); return; }
+        // If it's in RENDER_PASS, we don't have a complete 
+        if (data.state == State.RENDER_PASS) { renderNowFn(); return; }
         beginRender(stateMachine.initFns.recolorRenderFn);
     };
     const recolorFn = useDeferredFnExec(0.2, recolorNowFn);

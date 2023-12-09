@@ -1,12 +1,12 @@
 import { PixelDataBuffer, Polynomial, Roots } from "@/pkg/newton_wasm";
 import { newPolynomial, newRoots } from "../(wasm-wrapper)/structs";
 import { setRootColors } from "./render";
-import { newImagePixelDataBuffer } from "../(wasm-wrapper)/rendering";
+import { newImagePixelDataBuffer } from "../(wasm-wrapper)/wrapper";
 import { AppGeneralProps } from "../(components)/app-props";
 
 ///////////////////////////////////////////////////////////////////
 
-export enum RenderState {
+export enum State {
     RENDER_PASS,
     RECOLOR_PASS,
     DONE,
@@ -16,7 +16,7 @@ export type RenderPassFn<T = void> = (data: RenderStateData, context: CanvasRend
 export interface RenderStateData {
     fns: StateMachineFns,
 
-    stateData: StateData,
+    state: State,
     generalProps: AppGeneralProps,
     renderData?: RenderData,
     fractalData?: FractalData,
@@ -26,11 +26,6 @@ export interface StateMachineFns {
     prePassFn: RenderPassFn,
     passFn: RenderPassFn<boolean>,
     postPassFn: RenderPassFn,
-}
-
-export interface StateData {
-    curState: RenderState,
-    isRendering: boolean,
 }
 
 export interface RenderData {
@@ -48,11 +43,11 @@ export interface FractalData {
 ///////////////////////////////////////////////////////////////////
 
 export const isRenderStateFinishedRendering = (data: RenderStateData): boolean => {
-    return !data.stateData.isRendering
+    return !data.generalProps.isRendering.value
 }
 
 export const setRenderStateFinishedRendering = (data: RenderStateData) => {
-    data.stateData.isRendering = false;
+    data.generalProps.isRendering.value = false;
 }
 
 export const newRenderData = (): RenderData => ({

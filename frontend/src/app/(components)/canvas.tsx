@@ -13,7 +13,7 @@ export interface CanvasProps extends React.ComponentPropsWithoutRef<"canvas"> {
 }
 
 export const Canvas = (allProps: CanvasProps) => {
-    const { props, drawFn } = allProps;
+    const { props, drawFn, ...remProps } = allProps;
     const canvasRef = useAnimatedCanvas(drawFn);
     const { onMouseMove, onMouseLeave } = useOnChanges(props, canvasRef);
 
@@ -26,7 +26,7 @@ export const Canvas = (allProps: CanvasProps) => {
                 onMouseLeave={onMouseLeave}
                 width={800}
                 height={800}
-                {...props}
+                {...remProps}
             />
         </div>
     );
