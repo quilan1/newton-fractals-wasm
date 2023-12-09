@@ -48,8 +48,8 @@ For more details about Newton's Method, I recommend reading [The Wiki](https://e
 * `Random`: Generates random coefficients for formulas. Truly YOLO generation.
 * `Algorithm`: Various methods of finding roots are employed to create fun fractal images here.
   * `Newton's Method`: The grand-daddy method of them all. Generates nice chaotic behavior for many formulas. `z -= f(z)/f'(z)`.
-  * `Schröder's Method for Multiple Roots`: A form of corrected Newton method. Generates really beautiful blobs of placidity within turbulent areas of chaos. `z -= f(z)*f'(z)/(f'(z)^2 - f(z)*f''(z))`. See: McNamee, J.M. Numerical Methods for Roots of Polynomials, Part I, pg. 153.
-  * `Schröder's Method #2`: Another method, allegedly derived by Schröder, but I can't find direct citations for it yet. Generates less chaos than Newton's Method. `z -= f(z)/f'(z) - f''(z)*f(z)^2/(2*f'(z)^3)`.
+  * `Schröder's Method for Multiple Roots`: A form of corrected Newton method. Generates really beautiful blobs of placidity within turbulent areas of chaos. `z -= f(z)*f'(z)/(f'(z)^2 - f(z)*f''(z))`. See: McNamee, J.M. Numerical Methods for Roots of Polynomials, Part I, pg. 153, fig. (5.165).
+  * `Schröder's Method #2`: Another method derived by Schröder. Generates less chaos than Newton's Method, but typically has large circles of divergence around where `|f'(z)| ~= 0`. `z -= f(z)/f'(z) - f''(z)*f(z)^2/(2*f'(z)^3)`. See: McNamee, J.M. Numerical Methods for Roots of Polynomials, Part II, pg. 329, fig. (9.867).
   * `Halley's Method`: The second of the Householder methods. Like Schroder's Method #2, generates considerably less chaos than Newton. `z -= 2*f(z)*f'(z) / (2*f'(z)^2 - f(z)*f''(z))`.
   * `Steffensen's Method`: A fixed-point iteration algorithm, most points do not converge, so with almost all formulas, you'll be facing a black screen with some speckles of color. Generally only looks nice with low-order polynomials, or areas where Newton's Method produces little chaos. `z -= f(z)^2 / (f(f(z) + z) - f(z))`.
 

@@ -69,6 +69,12 @@ impl<T: TPolynomial> Polynomial<T> {
             .sum::<Complex32>()
     }
 
+    pub fn terms(&self) -> Vec<PolynomialTerm<T>> {
+        let mut terms = self.function.clone();
+        terms.sort_by_key(|t| t.power);
+        terms
+    }
+
     pub fn coefficients(&self) -> Vec<T> {
         let highest_power = self.function.iter().map(|t| t.power).max().unwrap();
         let mut coefs = vec![0f32.into(); highest_power as usize + 1];

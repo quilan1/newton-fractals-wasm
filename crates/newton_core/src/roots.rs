@@ -1,7 +1,4 @@
-#![allow(unused_variables, dead_code)]
-
 use num_complex::{Complex32, ComplexFloat};
-use rand::Rng;
 use serde::Deserialize;
 
 use crate::{
@@ -49,37 +46,52 @@ impl Roots {
 }
 
 pub fn roots_of<T: TPolynomial>(fz: &Polynomial<T>) -> Vec<Complex32> {
-    let mut roots = Vec::new();
-    let mut fz: CPolynomial = fz.into();
-    fz.normalize();
-
-    for attempt in 0..10 {
-        roots = match durand_kerner_roots(&fz) {
-            Some(r) => r,
-            None => continue,
-        }
-    }
+    let fz: CPolynomial = fz.into();
+    let Some(roots) = ae_roots(&fz) else {
+        return Vec::new();
+    };
 
     let mut roots = merge_nearby_roots(roots);
     roots.sort_by_cached_key(|z| (1000.0 * ((z.arg() + 360.) % 360.)) as i32);
     roots
 }
 
-// Because using 1.0 can occasionally diverge, I've taken an approach like neural networks,
-// of applying a factor that moves it in the right direction, but tries not to overshoot
-const WDK_DAMPING_FACTOR: f32 = 0.1;
-
-fn durand_kerner_roots(fz: &CPolynomial) -> Option<Vec<Complex32>> {
+// I've switched from the Weierstrass-Durand-Kerner Method over to the Aberth-Ehrlich Method
+// This has exhibited much quicker convergence & less of a chance of roots flying off into
+// Narnia. Also, I'm a little too scared to implement Jenkins-Traub for now.
+//
+// https://en.wikipedia.org/wiki/Aberth_method
+//
+fn ae_roots(fz: &CPolynomial) -> Option<Vec<Complex32>> {
     let num_roots = fz.order();
-    let mut roots = random_roots(num_roots);
-    for iteration in 0..1000 {
+    let mut roots = ae_initial_roots(fz);
+
+    for _iteration in 0..100 {
         let prev = roots.clone();
         roots = (0..num_roots)
             .map(|i| {
-                let w = wdk_correction_term(fz, &prev, num_roots, i);
-                prev[i] - WDK_DAMPING_FACTOR * w
+                let w = (0..roots.len())
+                    .filter(|&j| i != j)
+                    .map(|j| 1. / (roots[i] - roots[j]))
+                    .sum::<Complex32>();
+
+                let f0 = fz.f0(prev[i]);
+                let f1 = fz.f1(prev[i]);
+                let wk = f0 / (f1 - w * f0);
+                prev[i] - wk
             })
             .collect();
+
+        let deviations = roots
+            .iter()
+            .zip(prev.iter())
+            .map(|(r, p)| r - p)
+            .map(|d| d.abs())
+            .collect::<Vec<_>>();
+
+        if deviations.iter().all(|r| *r <= 0.00001) {
+            break;
+        }
 
         if roots.iter().any(|z| z.is_nan()) {
             return None;
@@ -89,25 +101,19 @@ fn durand_kerner_roots(fz: &CPolynomial) -> Option<Vec<Complex32>> {
     Some(roots)
 }
 
-fn wdk_correction_term(
-    fz: &CPolynomial,
-    roots: &[Complex32],
-    num_roots: usize,
-    i: usize,
-) -> Complex32 {
-    let numerator = fz.f0(roots[i]);
-    let denominator = (0..num_roots)
-        .filter(|&j| i != j)
-        .map(|j| roots[i] - roots[j])
-        .reduce(|res, b| res * b)
-        .unwrap_or(Complex32::new(1., 0.));
-    numerator / denominator
-}
+fn ae_initial_roots(fz: &CPolynomial) -> Vec<Complex32> {
+    let order = fz.order();
+    let mut coefs = fz.terms();
+    coefs.reverse();
 
-fn random_roots(num_roots: usize) -> Vec<Complex32> {
-    let mut rng = rand::thread_rng();
-    let z = Complex32::from_polar(1., rng.gen::<f32>() * 360.);
-    (0..num_roots).map(|p| z.powi(p as i32)).collect()
+    let r = coefs[coefs.len() - 1].coefficient / coefs[0].coefficient;
+    let r = r.abs().powf(1. / order as f32);
+
+    let theta = std::f32::consts::TAU / order as f32;
+    let offset = theta / (order as f32 + 1.);
+    (0..order)
+        .map(|k| Complex32::from_polar(r, k as f32 * theta + offset))
+        .collect()
 }
 
 fn merge_nearby_roots(roots: Vec<Complex32>) -> Vec<Complex32> {
