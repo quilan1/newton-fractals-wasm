@@ -11,7 +11,8 @@ export const newPolynomial = (formula: string): Polynomial | null => {
     }
 }
 
-export const newRoots = (fz: Polynomial): Roots | null => {
+export const newRoots = (fz?: Polynomial): Roots | null => {
+    if (!fz) return null;
     try {
         return new (getNewton().Roots)(fz);
     } catch (err) {

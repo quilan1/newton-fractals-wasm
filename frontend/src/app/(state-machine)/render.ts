@@ -66,8 +66,9 @@ export enum ColorScheme {
     MONOCHROMATIC = "Monochromatic"
 }
 
-export const setRootColors = (generalProps: AppGeneralProps, roots: Roots) => {
+export const setRootColors = (generalProps: AppGeneralProps, roots?: Roots) => {
     const { colorScheme, hueOffset, chromaticity, staticHues } = generalProps;
+    if (!roots) return;
 
     const complexRoots = roots.roots();
     const radii = complexRoots.map(c => Math.hypot(c.re, c.im));

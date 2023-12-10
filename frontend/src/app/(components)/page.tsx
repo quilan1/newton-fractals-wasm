@@ -8,11 +8,11 @@ import { Canvas } from './canvas';
 import { useAppOnKeyDown, useAppProps } from './app-props';
 
 export default function Home() {
-    const { generalProps, appDrawFns, stateMachine } = useAppProps();
+    const { generalProps, stateMachine, calculateNewPassFn } = useAppProps();
 
     useAppOnKeyDown(generalProps);
-    useInitializePage(appDrawFns.renderFn);
-    void stateMachine.initFns.onDone.then(_duration => {
+    useInitializePage(calculateNewPassFn);
+    void stateMachine.onDone.then(_duration => {
         generalProps.isRendering.value = false;
     });
 

@@ -24,8 +24,8 @@ export const Canvas = (allProps: CanvasProps) => {
                 ref={canvasRef}
                 onMouseMove={onMouseMove}
                 onMouseLeave={onMouseLeave}
-                width={800}
-                height={800}
+                width={1024}
+                height={1024}
                 {...remProps}
             />
         </div>
@@ -49,6 +49,7 @@ const useOnChanges = (props: AppGeneralProps, canvasRef: RefObject<HTMLCanvasEle
         return () => { canvas.removeEventListener('wheel', onWheel as EventListener, options); };
     }, [onWheel, canvas]);
 
+    // TODO: I've gotta figure out a way to properly throttle this so that it doesn't cause problems
     const onMouseMove = (e: MouseEvent<HTMLCanvasElement>) => {
         const { isRendering, transform, curPoint } = props;
         e.preventDefault();
@@ -62,7 +63,9 @@ const useOnChanges = (props: AppGeneralProps, canvasRef: RefObject<HTMLCanvasEle
             toCanvasCenterOrigin(),
             _transform
         );
-        curPoint.value = `${curPt.x.toFixed(5)} ${curPt.y < 0 ? '-' : '+'} ${Math.abs(curPt.y).toFixed(5)}i`;
+
+        const curPtStr = `${curPt.x.toFixed(5)} ${curPt.y < 0 ? '-' : '+'} ${Math.abs(curPt.y).toFixed(5)}i`;
+        curPoint.value = curPtStr;
 
         if (!(e.buttons & 1)) return;
 

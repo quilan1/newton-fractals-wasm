@@ -50,30 +50,35 @@ export const setRenderStateFinishedRendering = (data: RenderStateData) => {
     data.generalProps.isRendering.value = false;
 }
 
-export const newRenderData = (): RenderData => ({
+export const newRenderData = (scaleFactor = 6): RenderData => ({
     startTime: Date.now(),
     row: 0,
-    scaleFactor: 5,
+    scaleFactor,
 });
 
-export const newFractalData = (generalProps: AppGeneralProps): FractalData | undefined => {
+export const resetFractalData = (
+    fractalData: FractalData | undefined, generalProps: AppGeneralProps, recalculate: boolean
+): FractalData | undefined => {
     const { formula } = generalProps;
 
-    const fz = newPolynomial(formula.value);
-    if (!fz) return undefined;
-
-    const roots = newRoots(fz);
-    if (!roots) { fz.free(); return undefined; }
-    setRootColors(generalProps, roots);
-
+    fractalData?.pdb.free();
     const pdb = newImagePixelDataBuffer();
 
-    return { fz, roots, pdb }
-}
+    let fz = fractalData?.fz;
+    let roots = fractalData?.roots;
 
-export const freeFractalData = (fractalData?: FractalData) => {
-    if (!fractalData) return;
-    fractalData.fz.free();
-    fractalData.roots.free();
-    fractalData.pdb.free();
+    if (!fractalData || recalculate) {
+        fz = newPolynomial(formula.value) ?? undefined;
+        roots = newRoots(fz) ?? undefined;
+    }
+
+    if (!fz || !roots) {
+        fz?.free();
+        roots?.free();
+        pdb.free();
+        return undefined;
+    }
+
+    setRootColors(generalProps, roots);
+    return { fz, roots, pdb }
 }

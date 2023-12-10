@@ -17,7 +17,7 @@ pub use roots::{OklchColor, Roots};
 
 ///////////////////////////////////////////////////////////////////
 
-pub const CANVAS_SIZE: usize = 800;
+pub const CANVAS_SIZE: usize = 1024;
 
 // All calculations are done within the window:
 // (-COMPLEX_WINDOW - i * COMPLEX_WINDOW) to (COMPLEX_WINDOW + i * COMPLEX_WINDOW)

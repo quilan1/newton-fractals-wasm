@@ -5,12 +5,12 @@
 }
 
 .appContainer {
-    .grid(@columns: 1fr 2fr minmax(0px, 1fr), @rows: minmax(@canvas-min, 1fr));
+    .grid(@columns: 1fr 2.6fr minmax(0px, 1fr), @rows: minmax(@canvas-min, 1fr));
     grid-template-areas: "settingsStatus canvas .";
     max-height: 100%;
 
     @media @media-width-full {
-        .grid(@columns: minmax(@settings-width-min, 1fr) minmax(@canvas-min, 2fr), @rows: minmax(@canvas-min, 1fr));
+        .grid(@columns: minmax(@settings-width-min, 1fr) minmax(@canvas-min, 2.6fr), @rows: minmax(@canvas-min, 1fr));
         grid-template-areas: "settingsStatus canvas";
     }
 

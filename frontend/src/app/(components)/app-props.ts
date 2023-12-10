@@ -3,12 +3,12 @@ import { transformIdent } from "../(util)/transform";
 import { useValue } from "../(util)/valued";
 import { IterRootMethod } from "../(wasm-wrapper)/structs";
 import { defaultPolynomials } from "./settings";
-import { RenderFn, StateMachineProps, useStateMachine } from "../(state-machine)/state-machine";
+import { RenderFn, StateMachineInitFns, StateMachineProps, useStateMachine } from "../(state-machine)/state-machine";
 import { isValidFormula } from "../(wasm-wrapper)/util";
-import { useDeferredFnExec } from "../(util)/deferred-fn";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { ColorScheme } from "../(state-machine)/render";
 import { useEventListener } from "../(util)/util";
+import { DebouncedFunc, throttle } from "lodash";
 
 export type AppGeneralProps = ReturnType<typeof useAppGeneralProps>;
 export const useAppGeneralProps = () => {
@@ -35,49 +35,69 @@ export const useAppGeneralProps = () => {
 export const useAppProps = () => {
     const generalProps = useAppGeneralProps();
     const stateMachine = useStateMachine();
-    const appDrawFns = useAppDrawFns(generalProps, stateMachine);
+    const stateMachineInitFns = useStateMachineInitFns(generalProps, stateMachine);
+    useGeneralPropTriggers(generalProps, stateMachineInitFns);
 
-    /* eslint-disable react-hooks/exhaustive-deps */
-
-    // Render upon changes
-    useEffect(() => { appDrawFns.renderFn(); }, [
-        generalProps.formula.value, generalProps.transform.value.scale, generalProps.transform.value.translate,
-        generalProps.iterMethod.value
-    ]);
-
-    // Recolor upon changes
-    useEffect(() => { appDrawFns.recolorFn(); }, [
-        generalProps.colorScheme.value, generalProps.hueOffset.value, generalProps.chromaticity.value,
-        generalProps.dropoff.value, generalProps.renderRoots.value, generalProps.staticHues.value,
-    ]);
-
-    /* eslint-enable react-hooks/exhaustive-deps */
-
-    return { generalProps, appDrawFns, stateMachine };
+    return { generalProps, stateMachine, calculateNewPassFn: stateMachineInitFns.calculateNewPassFn };
 }
 
-export const useAppDrawFns = (generalProps: AppGeneralProps, stateMachine: StateMachineProps) => {
+/* eslint-disable react-hooks/exhaustive-deps */
+const useGeneralPropTriggers = (props: AppGeneralProps, initFns: ToVoidFn<StateMachineInitFns>) => {
+    // Because there are cases where multiple types of property change at the same time, these are ranked in a
+    // sort of priority system. Things at the end are most important.
+
+    const throttledFunc = useRef<DebouncedFunc<() => void>>();
+    const applyThrottleFunc = (fn: () => void) => {
+        throttledFunc.current?.cancel();
+        throttledFunc.current = throttle(fn);
+        throttledFunc.current();
+    }
+
+    // Recolor the existing PDB
+    useEffect(() => { applyThrottleFunc(initFns.recolorPassFn); }, [
+        props.colorScheme.value, props.hueOffset.value, props.chromaticity.value,
+        props.dropoff.value, props.renderRoots.value, props.staticHues.value,
+    ]);
+
+    // Recalculate the existing formula / roots
+    useEffect(() => { applyThrottleFunc(initFns.recalculatePassFn); }, [
+        props.transform.value.scale, props.transform.value.translate,
+    ]);
+
+    // Calculate from the start, with fresh formula / roots
+    useEffect(() => { applyThrottleFunc(initFns.calculateNewPassFn); }, [
+        props.formula.value, props.iterMethod.value
+    ]);
+}
+/* eslint-enable react-hooks/exhaustive-deps */
+
+type ToVoidFn<T extends object> = { [K in keyof T]: () => void };
+const useStateMachineInitFns = (generalProps: AppGeneralProps, stateMachine: StateMachineProps): ToVoidFn<StateMachineInitFns> => {
     const { formula, isRendering } = generalProps;
 
-    const beginRender = (fn: RenderFn) => {
+    const newStateMachinePass = (fn: RenderFn) => {
         if (!isValidFormula(formula.value)) return;
         isRendering.value = true;
         fn(generalProps, stateMachine);
     }
 
-    const renderNowFn = () => { beginRender(stateMachine.initFns.startRenderFn); };
-    const renderFn = useDeferredFnExec(0.2, renderNowFn);
+    type VoidInitFns = ToVoidFn<StateMachineInitFns>;
+    const initFns: VoidInitFns = {} as VoidInitFns;
+    for (const [k, fn] of Object.entries(stateMachine.initFns)) {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        (initFns as Record<string, RenderFn>)[k] = () => { newStateMachinePass(fn as RenderFn) };
+    }
 
-    const recolorNowFn = () => {
+    // Bit of a special case here, as we need to recalculate if we're not done the
+    // full calculations. This is because the PDB won't have been filled out completely
+    initFns.recolorPassFn = () => {
         const data = stateMachine.data.current;
         if (!data) return;
-        // If it's in RENDER_PASS, we don't have a complete 
-        if (data.state == State.RENDER_PASS) { renderNowFn(); return; }
-        beginRender(stateMachine.initFns.recolorRenderFn);
+        if (data.state == State.RENDER_PASS) { initFns.recalculatePassFn(); return; }
+        newStateMachinePass(stateMachine.initFns.recolorPassFn)
     };
-    const recolorFn = useDeferredFnExec(0.2, recolorNowFn);
 
-    return { renderFn, renderNowFn, recolorFn };
+    return initFns;
 }
 
 export const useAppOnKeyDown = (props: AppGeneralProps) => {
