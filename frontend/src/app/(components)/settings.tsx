@@ -12,8 +12,8 @@ import { ColorScheme } from '../(state-machine)/render';
 
 enum SettingsPanel {
     RENDERING = "Rendering",
-    DEBUG = "Debug",
     INFO = "Info",
+    DEBUG = "Debug",
 }
 
 export const Settings = (props: AppGeneralProps) => {

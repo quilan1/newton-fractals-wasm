@@ -34,11 +34,12 @@ export const Canvas = (allProps: CanvasProps) => {
 
 const useOnChanges = (props: AppGeneralProps, canvasRef: RefObject<HTMLCanvasElement>) => {
     const onWheel = useCallback((e: WheelEvent) => {
-        const { transform, curPoint } = props;
+        const { isRendering, transform, curPoint } = props;
         const zoomAdjust = e.deltaY / 1000;
         e.preventDefault();
         transform.value.scale *= Math.pow(2, zoomAdjust);
         curPoint.value = "";
+        isRendering.value = false;
     }, [props]);
 
     const canvas = canvasRef.current;

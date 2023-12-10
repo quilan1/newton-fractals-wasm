@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { throttle } from 'lodash';
+import { useEffect, useMemo, useRef } from 'react';
 
 type Setter<T> = (value: T | PromiseLike<T>) => void;
 export const setterPromise = <T>(): [Setter<T>, Promise<T>] => {
@@ -29,6 +30,20 @@ export const useEventListener = (eventName: string, handler: EventListener, getE
         },
         [eventName, getElement] // Re-run if eventName or element changes
     );
+};
+
+export const useThrottle = (timeoutMs: number, fn: () => void) => {
+    const ref = useRef<() => void>();
+
+    useEffect(() => {
+        ref.current = fn;
+    }, [fn]);
+
+    const throttledCallback = useMemo(() => {
+        return throttle(() => { ref.current?.(); }, timeoutMs);
+    }, [timeoutMs]);
+
+    return throttledCallback;
 };
 
 export const classNames = (styles: Record<string, string>, classes: (string | undefined)[]): string => {

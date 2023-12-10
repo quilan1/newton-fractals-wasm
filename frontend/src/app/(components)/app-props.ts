@@ -5,10 +5,9 @@ import { IterRootMethod } from "../(wasm-wrapper)/structs";
 import { defaultPolynomials } from "./settings";
 import { RenderFn, StateMachineInitFns, StateMachineProps, useStateMachine } from "../(state-machine)/state-machine";
 import { isValidFormula } from "../(wasm-wrapper)/util";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { ColorScheme } from "../(state-machine)/render";
 import { useEventListener } from "../(util)/util";
-import { DebouncedFunc, throttle } from "lodash";
 
 export type AppGeneralProps = ReturnType<typeof useAppGeneralProps>;
 export const useAppGeneralProps = () => {
@@ -46,28 +45,33 @@ const useGeneralPropTriggers = (props: AppGeneralProps, initFns: ToVoidFn<StateM
     // Because there are cases where multiple types of property change at the same time, these are ranked in a
     // sort of priority system. Things at the end are most important.
 
-    const throttledFunc = useRef<DebouncedFunc<() => void>>();
-    const applyThrottleFunc = (fn: () => void) => {
-        throttledFunc.current?.cancel();
-        throttledFunc.current = throttle(fn);
-        throttledFunc.current();
+    const triggeredFn = useValue<() => void>();
+    const triggerFn = (fn: () => void) => {
+        triggeredFn.value = fn;
     }
 
     // Recolor the existing PDB
-    useEffect(() => { applyThrottleFunc(initFns.recolorPassFn); }, [
+    useEffect(() => { triggerFn(initFns.recolorPassFn); }, [
         props.colorScheme.value, props.hueOffset.value, props.chromaticity.value,
         props.dropoff.value, props.renderRoots.value, props.staticHues.value,
     ]);
 
     // Recalculate the existing formula / roots
-    useEffect(() => { applyThrottleFunc(initFns.recalculatePassFn); }, [
+    useEffect(() => { triggerFn(initFns.recalculatePassFn); }, [
         props.transform.value.scale, props.transform.value.translate,
     ]);
 
     // Calculate from the start, with fresh formula / roots
-    useEffect(() => { applyThrottleFunc(initFns.calculateNewPassFn); }, [
+    useEffect(() => { triggerFn(initFns.calculateNewPassFn); }, [
         props.formula.value, props.iterMethod.value
     ]);
+
+    useEffect(() => {
+        if (!triggeredFn.value) return;
+        const fn = triggeredFn.value;
+        triggeredFn.value = undefined;
+        fn();
+    }, [triggeredFn.value])
 }
 /* eslint-enable react-hooks/exhaustive-deps */
 
