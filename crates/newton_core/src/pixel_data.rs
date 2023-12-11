@@ -1,4 +1,4 @@
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct PixelData(pub u16);
 
 pub struct PixelDataDetail {

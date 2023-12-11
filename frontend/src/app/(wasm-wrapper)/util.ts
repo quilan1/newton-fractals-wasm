@@ -20,4 +20,26 @@ export const isValidFormula = (formula: string) => {
     return terms.length > 0 && terms.every(term => term.match(re));
 }
 
-export const transformDropoff = (dropoff: number) => lerp(dropoff, 1.0, 0.15);
+export const calcDropoff = (dropoff: number) => lerp(dropoff, 1.0, 0.6);
+
+export const hexF32 = (n: number) => {
+    const getHex = (i: number) => ('00' + i.toString(16)).slice(-2);
+
+    const view = new DataView(new ArrayBuffer(4));
+    view.setFloat32(0, n);
+
+    return [...new Array(4).keys()]
+        .map(i => getHex(view.getUint8(i)))
+        .join('');
+}
+
+export const hexF64 = (n: number) => {
+    const getHex = (i: number) => ('00' + i.toString(16)).slice(-2);
+
+    const view = new DataView(new ArrayBuffer(8));
+    view.setFloat64(0, n);
+
+    return [...new Array(8).keys()]
+        .map(i => getHex(view.getUint8(i)))
+        .join('');
+}

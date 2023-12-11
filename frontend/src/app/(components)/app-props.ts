@@ -5,9 +5,10 @@ import { IterRootMethod } from "../(wasm-wrapper)/structs";
 import { defaultPolynomials } from "./settings";
 import { RenderFn, StateMachineInitFns, StateMachineProps, useStateMachine } from "../(state-machine)/state-machine";
 import { isValidFormula } from "../(wasm-wrapper)/util";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { ColorScheme } from "../(state-machine)/render";
 import { useEventListener } from "../(util)/util";
+import { DebouncedFunc, throttle } from "lodash";
 
 export type AppGeneralProps = ReturnType<typeof useAppGeneralProps>;
 export const useAppGeneralProps = () => {
@@ -45,9 +46,12 @@ const useGeneralPropTriggers = (props: AppGeneralProps, initFns: ToVoidFn<StateM
     // Because there are cases where multiple types of property change at the same time, these are ranked in a
     // sort of priority system. Things at the end are most important.
 
-    const triggeredFn = useValue<() => void>();
+    const triggeredFn = useRef<DebouncedFunc<() => void>>();
     const triggerFn = (fn: () => void) => {
-        triggeredFn.value = fn;
+        triggeredFn.current?.cancel();
+        const _fn = throttle(fn);
+        triggeredFn.current = _fn;
+        _fn();
     }
 
     // Recolor the existing PDB
@@ -65,13 +69,6 @@ const useGeneralPropTriggers = (props: AppGeneralProps, initFns: ToVoidFn<StateM
     useEffect(() => { triggerFn(initFns.calculateNewPassFn); }, [
         props.formula.value, props.iterMethod.value
     ]);
-
-    useEffect(() => {
-        if (!triggeredFn.value) return;
-        const fn = triggeredFn.value;
-        triggeredFn.value = undefined;
-        fn();
-    }, [triggeredFn.value])
 }
 /* eslint-enable react-hooks/exhaustive-deps */
 

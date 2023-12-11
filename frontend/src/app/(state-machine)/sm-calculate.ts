@@ -23,7 +23,7 @@ export const newCalculatePassFn = (postSetupFn: (data: RenderStateData) => void,
 
 const prePassFn: RenderPassFn = (data: RenderStateData, _context: CanvasRenderingContext2D) => {
     if (data.state == State.DONE) return;
-    if (!data.renderData || !data.fractalData) setRenderStateFinishedRendering(data);
+    if (!data.renderData || !data.fractalData) { setRenderStateFinishedRendering(data); return; }
 }
 
 const passFn: RenderPassFn<boolean> = (data: RenderStateData, context: CanvasRenderingContext2D) => {

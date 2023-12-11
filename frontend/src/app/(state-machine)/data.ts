@@ -61,21 +61,23 @@ export const resetFractalData = (
 ): FractalData | undefined => {
     const { formula } = generalProps;
 
-    fractalData?.pdb.free();
-    const pdb = newImagePixelDataBuffer();
-
     let fz = fractalData?.fz;
     let roots = fractalData?.roots;
+    let pdb = fractalData?.pdb;
 
     if (!fractalData || recalculate) {
-        fz = newPolynomial(formula.value) ?? undefined;
-        roots = newRoots(fz) ?? undefined;
-    }
-
-    if (!fz || !roots) {
         fz?.free();
         roots?.free();
-        pdb.free();
+        pdb?.free();
+        fz = newPolynomial(formula.value) ?? undefined;
+        roots = newRoots(fz) ?? undefined;
+        pdb = newImagePixelDataBuffer();
+    }
+
+    if (!fz || !roots || !pdb) {
+        fz?.free();
+        roots?.free();
+        pdb?.free();
         return undefined;
     }
 

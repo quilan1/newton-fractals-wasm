@@ -16,7 +16,7 @@ use crate::{
 
 #[wasm_bindgen(js_name = __newImagePixelDataBuffer)]
 pub fn new_image_pixel_data_buffer() -> PixelDataBuffer {
-    let pixel_data = vec![PixelData(0); canvas_size() * canvas_size()];
+    let pixel_data = vec![PixelData::default(); canvas_size() * canvas_size()];
     PixelDataBuffer::new(pixel_data)
 }
 
@@ -30,7 +30,7 @@ pub fn calculate_row(
     row: usize,
 ) -> Result<PixelDataBuffer, JsError> {
     let num_pixels = canvas_size() / render_scale;
-    let mut pixel_data = vec![PixelData(0); num_pixels];
+    let mut pixel_data = vec![PixelData::default(); num_pixels];
 
     let affine_transform: Transform = affine_transform.js_try_into()?;
     let (z, units_per_pixel_scaled) = calculate_z_start(affine_transform.scale, row, num_pixels);
