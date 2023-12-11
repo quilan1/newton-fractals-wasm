@@ -5,14 +5,15 @@ import { initWasmNewtonAsync } from '../(wasm-wrapper)/consts';
 import { Settings } from './settings';
 import { Status } from './status';
 import { Canvas } from './canvas';
-import { useAppOnKeyDown, useAppProps } from './app-props';
+import { AppGeneralProps, useAppOnKeyDown, useAppProps } from './app-props';
 
 export default function Home() {
-    const { generalProps, stateMachine, calculateNewPassFn } = useAppProps();
+    const { generalProps, stateMachine } = useAppProps();
 
     useAppOnKeyDown(generalProps);
-    useInitializePage(calculateNewPassFn);
+    useInitializePage(generalProps);
     void stateMachine.onDone.then(_duration => {
+        // console.log("Rendered:", _duration);
         generalProps.isRendering.value = false;
     });
 
@@ -29,10 +30,10 @@ export default function Home() {
     );
 }
 
-const useInitializePage = (fn: () => void) => {
+const useInitializePage = (generalProps: AppGeneralProps) => {
     useAsyncOnce(async () => {
         console.clear();
         await initWasmNewtonAsync();
-        fn();
+        generalProps.isRendering.value = true;
     });
 }

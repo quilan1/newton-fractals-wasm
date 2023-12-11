@@ -6,7 +6,7 @@ import { calculateRow, recolorRow, renderRow } from "../(wasm-wrapper)/wrapper";
 import { RenderStateData } from "./data";
 import { Roots } from "@/pkg/newton_wasm";
 import { lerpClamped, toSplitArray } from "../(util)/util";
-import { AppGeneralProps } from "../(components)/app-props";
+import { AppGeneralPropsRaw } from "../(components)/app-props";
 
 export const renderToCanvasRow = (data: RenderStateData, context: CanvasRenderingContext2D) => {
     assert(!!data.renderData && !!data.fractalData);
@@ -14,8 +14,8 @@ export const renderToCanvasRow = (data: RenderStateData, context: CanvasRenderin
     const { transform, iterMethod, dropoff } = data.generalProps;
     const { row, scaleFactor } = data.renderData;
     const { fz, roots, pdb } = data.fractalData;
-    const pdbRow = calculateRow(fz, roots, transform.value, iterMethod.value, 1 << scaleFactor, row);
-    renderRow(context, roots, pdb, pdbRow, 1 << scaleFactor, row, dropoff.value);
+    const pdbRow = calculateRow(fz, roots, transform, iterMethod, 1 << scaleFactor, row);
+    renderRow(context, roots, pdb, pdbRow, 1 << scaleFactor, row, dropoff);
     pdbRow.free();
 }
 
@@ -25,7 +25,7 @@ export const recolorCanvasRow = (data: RenderStateData, context: CanvasRendering
     const { dropoff } = data.generalProps;
     const { row } = data.renderData;
     const { roots, pdb } = data.fractalData;
-    recolorRow(context, roots, pdb, row, dropoff.value);
+    recolorRow(context, roots, pdb, row, dropoff);
 }
 
 export const drawRoots = (data: RenderStateData, context: CanvasRenderingContext2D) => {
@@ -34,7 +34,7 @@ export const drawRoots = (data: RenderStateData, context: CanvasRenderingContext
     const { transform } = data.generalProps;
     const { roots } = data.fractalData;
 
-    const _transform = invert(transformMany(toCanvasCenterOrigin(), canvasToUnitTransform(transform.value)));
+    const _transform = invert(transformMany(toCanvasCenterOrigin(), canvasToUnitTransform(transform)));
     for (const root of roots.roots()) {
         const { x, y } = applyTransforms(root.re, root.im, _transform);
 
@@ -66,7 +66,7 @@ export enum ColorScheme {
     MONOCHROMATIC = "Monochromatic"
 }
 
-export const setRootColors = (generalProps: AppGeneralProps, roots?: Roots) => {
+export const setRootColors = (generalProps: AppGeneralPropsRaw, roots?: Roots) => {
     const { colorScheme, hueOffset, chromaticity, staticHues } = generalProps;
     if (!roots) return;
 
@@ -77,28 +77,28 @@ export const setRootColors = (generalProps: AppGeneralProps, roots?: Roots) => {
         radius: radii[i],
         color: {
             h: Math.atan2(c.im, c.re) * 180 / Math.PI,
-            c: lerpClamped(radii[i] / 1.5, 0.01, 0.4 * chromaticity.value),
+            c: lerpClamped(radii[i] / 1.5, 0.01, 0.4 * chromaticity),
         }
     }));
 
     let info: ColorInfo[];
-    switch (colorScheme.value) {
+    switch (colorScheme) {
         case ColorScheme.LINEAR_HUES:
-            info = linearHueColors(colorInfo, staticHues.value);
+            info = linearHueColors(colorInfo, staticHues);
             break;
         case ColorScheme.CONTRASTING_HUES:
-            info = contrastingHueColors(colorInfo, staticHues.value);
+            info = contrastingHueColors(colorInfo, staticHues);
             break;
         case ColorScheme.MONOCHROMATIC:
-            info = monochromaticColors(colorInfo, staticHues.value);
+            info = monochromaticColors(colorInfo, staticHues);
             break;
         default:
-            const _colorScheme: never = colorScheme.value;
+            const _colorScheme: never = colorScheme;
             console.error("Invalid colorScheme:", _colorScheme);
             return;
     }
 
-    info.forEach(i => { i.color.h += hueOffset.value; });
+    info.forEach(i => { i.color.h += hueOffset; });
     info.sort((a, b) => a.rootIndex - b.rootIndex);
 
     const colors = info.map(c => c.color);

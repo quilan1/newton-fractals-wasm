@@ -3,7 +3,7 @@ import { setterPromise } from "../(util)/util";
 import { getNewtonSync } from "../(wasm-wrapper)/consts";
 import { State, RenderStateData, isRenderStateFinishedRendering, setRenderStateFinishedRendering } from "./data";
 import { CanvasDrawFn } from "../(components)/canvas";
-import { AppGeneralProps } from "../(components)/app-props";
+import { AppGeneralPropsRaw } from "../(components)/app-props";
 import { newCalculatePassFn } from "./sm-calculate";
 import { newRecolorPassFn } from "./sm-recolor";
 
@@ -14,9 +14,16 @@ const renderFn = (context: CanvasRenderingContext2D, data: RenderStateData) => {
 
     const msPerFrame = 1000 / 60.0;
 
-    const start = Date.now();
-    while (Date.now() - start < msPerFrame) {
+    const start = performance.now();
+    let count = 0;
+    let avgMsPerFrame = 0;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    while (true) {
         if (!data.fns.passFn(data, context)) break;
+        count += 1;
+        const duration = performance.now() - start;
+        avgMsPerFrame = duration / count;
+        if (duration + avgMsPerFrame >= msPerFrame) break;
     }
     if (isRenderStateFinishedRendering(data)) return;
 
@@ -24,7 +31,7 @@ const renderFn = (context: CanvasRenderingContext2D, data: RenderStateData) => {
     if (isRenderStateFinishedRendering(data)) return;
 }
 
-export type RenderFn = (generalProps: AppGeneralProps, stateMachine: StateMachineProps) => void;
+export type RenderFn = (generalProps: AppGeneralPropsRaw, stateMachine: StateMachineProps) => void;
 export type StateMachineDataRef = MutableRefObject<RenderStateData | undefined>;
 
 export type StateMachineProps = ReturnType<typeof useStateMachine>;
@@ -43,10 +50,12 @@ export const useStateMachine = () => {
     return { data, stepFn, initFns, onDone };
 }
 
+export type RenderFnToBool = (..._: Parameters<RenderFn>) => boolean;
 export interface StateMachineInitFns {
-    calculateNewPassFn: RenderFn,
-    recalculatePassFn: RenderFn,
-    recolorPassFn: RenderFn,
+    calculateNewPassFn: RenderFnToBool,
+    recalculatePassFn: RenderFnToBool,
+    recolorPassFn: RenderFnToBool,
+    updateIsRenderingPassFn: typeof updateIsRenderingPassFn,
 }
 
 const useStateMachineInitFns = () => {
@@ -66,8 +75,25 @@ const useStateMachineInitFns = () => {
 
     const calculateNewPassFn = newCalculatePassFn(postSetupFn, true);
     const recalculatePassFn = newCalculatePassFn(postSetupFn, false);
-    const recolorPassFn = newRecolorPassFn(postSetupFn);
-    const initFns: StateMachineInitFns = { calculateNewPassFn, recalculatePassFn, recolorPassFn };
+
+    // Bit of a special case here, as we need to recalculate if we're not done the
+    // full calculations. This is because the PDB won't have been filled out completely
+    const _recolorPassFn = newRecolorPassFn(postSetupFn);
+    const recolorPassFn = (generalProps: AppGeneralPropsRaw, stateMachine: StateMachineProps) => {
+        const data = stateMachine.data.current;
+        if (!data) return false;
+        if (data.state == State.RENDER_PASS) { return recalculatePassFn(generalProps, stateMachine); }
+        return _recolorPassFn(generalProps, stateMachine);
+    };
+
+    const initFns: StateMachineInitFns = { calculateNewPassFn, recalculatePassFn, recolorPassFn, updateIsRenderingPassFn };
 
     return { initFns, onDone };
+}
+
+const updateIsRenderingPassFn = (stateMachine: StateMachineProps, isRendering: boolean) => {
+    const { data } = stateMachine;
+    if (data.current) {
+        data.current.generalProps.isRendering = isRendering;
+    }
 }

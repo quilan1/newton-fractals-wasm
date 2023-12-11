@@ -2,7 +2,7 @@ import { PixelDataBuffer, Polynomial, Roots } from "@/pkg/newton_wasm";
 import { newPolynomial, newRoots } from "../(wasm-wrapper)/structs";
 import { setRootColors } from "./render";
 import { newImagePixelDataBuffer } from "../(wasm-wrapper)/wrapper";
-import { AppGeneralProps } from "../(components)/app-props";
+import { AppGeneralPropsRaw } from "../(components)/app-props";
 
 ///////////////////////////////////////////////////////////////////
 
@@ -17,7 +17,7 @@ export interface RenderStateData {
     fns: StateMachineFns,
 
     state: State,
-    generalProps: AppGeneralProps,
+    generalProps: AppGeneralPropsRaw,
     renderData?: RenderData,
     fractalData?: FractalData,
 }
@@ -43,11 +43,11 @@ export interface FractalData {
 ///////////////////////////////////////////////////////////////////
 
 export const isRenderStateFinishedRendering = (data: RenderStateData): boolean => {
-    return !data.generalProps.isRendering.value
+    return !data.generalProps.isRendering
 }
 
 export const setRenderStateFinishedRendering = (data: RenderStateData) => {
-    data.generalProps.isRendering.value = false;
+    data.generalProps.isRendering = false;
 }
 
 export const newRenderData = (scaleFactor = 6): RenderData => ({
@@ -57,7 +57,7 @@ export const newRenderData = (scaleFactor = 6): RenderData => ({
 });
 
 export const resetFractalData = (
-    fractalData: FractalData | undefined, generalProps: AppGeneralProps, recalculate: boolean
+    fractalData: FractalData | undefined, generalProps: AppGeneralPropsRaw, recalculate: boolean
 ): FractalData | undefined => {
     const { formula } = generalProps;
 
@@ -69,7 +69,7 @@ export const resetFractalData = (
         fz?.free();
         roots?.free();
         pdb?.free();
-        fz = newPolynomial(formula.value) ?? undefined;
+        fz = newPolynomial(formula) ?? undefined;
         roots = newRoots(fz) ?? undefined;
         pdb = newImagePixelDataBuffer();
     }

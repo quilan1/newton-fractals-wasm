@@ -34,12 +34,11 @@ export const Canvas = (allProps: CanvasProps) => {
 
 const useOnChanges = (props: AppGeneralProps, canvasRef: RefObject<HTMLCanvasElement>) => {
     const onWheel = useCallback((e: WheelEvent) => {
-        const { isRendering, transform, curPoint } = props;
+        const { transform, curPoint } = props;
         const zoomAdjust = e.deltaY / 1000;
         e.preventDefault();
         transform.value.scale *= Math.pow(2, zoomAdjust);
         curPoint.value = "";
-        isRendering.value = false;
     }, [props]);
 
     const canvas = canvasRef.current;
@@ -52,7 +51,7 @@ const useOnChanges = (props: AppGeneralProps, canvasRef: RefObject<HTMLCanvasEle
 
     // TODO: I've gotta figure out a way to properly throttle this so that it doesn't cause problems
     const onMouseMove = (e: MouseEvent<HTMLCanvasElement>) => {
-        const { isRendering, transform, curPoint } = props;
+        const { transform, curPoint } = props;
         e.preventDefault();
 
         const newton = getNewtonSync();
@@ -71,7 +70,6 @@ const useOnChanges = (props: AppGeneralProps, canvasRef: RefObject<HTMLCanvasEle
         if (!(e.buttons & 1)) return;
 
         transform.value.translate = applyTransforms(-e.movementX, -e.movementY, _transform);
-        isRendering.value = false;
     }
 
     const onMouseLeave = (_e: MouseEvent<HTMLCanvasElement>) => {

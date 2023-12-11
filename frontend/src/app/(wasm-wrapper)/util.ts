@@ -5,7 +5,8 @@ export const wasmMemoryUsage = () => {
     return getWasmSync()?.memory.buffer.byteLength ?? null;
 }
 
-export const isValidFormula = (formula: string) => {
+export const isValidFormula = (formula?: string) => {
+    if (formula == undefined) return false;
     if (!formula.includes("z")) return false;
     formula = formula.replaceAll(/[\s\(\)\*]+/g, "");
 

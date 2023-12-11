@@ -1,23 +1,26 @@
 import assert from "assert";
-import { AppGeneralProps } from "../(components)/app-props";
+import { AppGeneralPropsRaw } from "../(components)/app-props";
 import { getNewtonSync } from "../(wasm-wrapper)/consts";
 import { RenderPassFn, RenderStateData, State, StateMachineFns, resetFractalData, newRenderData, setRenderStateFinishedRendering } from "./data";
-import { RenderFn, StateMachineProps } from "./state-machine";
+import { StateMachineProps } from "./state-machine";
 import { drawRoots, renderToCanvasRow } from "./render";
+import { isValidFormula } from "../(wasm-wrapper)/util";
 
-export const newCalculatePassFn = (postSetupFn: (data: RenderStateData) => void, recalculate: boolean): RenderFn => {
-    return (generalProps: AppGeneralProps, stateMachine: StateMachineProps) => {
-        if (!getNewtonSync()) return;
+export const newCalculatePassFn = (postSetupFn: (data: RenderStateData) => void, recalculate: boolean) => {
+    return (generalProps: AppGeneralPropsRaw, stateMachine: StateMachineProps) => {
+        if (!getNewtonSync()) return false;
+        if (!isValidFormula(generalProps.formula)) return false;
 
         const { data } = stateMachine;
         const fns: StateMachineFns = { prePassFn, passFn, postPassFn };
         const renderData = newRenderData();
         const fractalData = resetFractalData(data.current?.fractalData, generalProps, recalculate);
         const state = State.RENDER_PASS;
-        generalProps.isRendering.value = !!fractalData;
+        generalProps.isRendering = !!fractalData;
 
         data.current = { fns, generalProps, state, renderData, fractalData };
         postSetupFn(data.current);
+        return true;
     }
 }
 
@@ -49,7 +52,7 @@ const passFn: RenderPassFn<boolean> = (data: RenderStateData, context: CanvasRen
 
 const postPassFn: RenderPassFn = (data: RenderStateData, context: CanvasRenderingContext2D) => {
     if (data.state == State.DONE) return;
-    if (!data.generalProps.renderRoots.value) return;
+    if (!data.generalProps.renderRoots) return;
 
     drawRoots(data, context);
 }

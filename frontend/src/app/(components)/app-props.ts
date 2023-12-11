@@ -1,16 +1,16 @@
-import { State } from "../(state-machine)/data";
 import { transformIdent } from "../(util)/transform";
-import { useValue } from "../(util)/valued";
+import { FromValued, devalue, useValue } from "../(util)/valued";
 import { IterRootMethod } from "../(wasm-wrapper)/structs";
 import { defaultPolynomials } from "./settings";
-import { RenderFn, StateMachineInitFns, StateMachineProps, useStateMachine } from "../(state-machine)/state-machine";
-import { isValidFormula } from "../(wasm-wrapper)/util";
+import { RenderFnToBool, StateMachineProps, useStateMachine } from "../(state-machine)/state-machine";
 import { useEffect, useRef } from "react";
 import { ColorScheme } from "../(state-machine)/render";
 import { useEventListener } from "../(util)/util";
 import { DebouncedFunc, throttle } from "lodash";
 
 export type AppGeneralProps = ReturnType<typeof useAppGeneralProps>;
+export type AppGeneralPropsRaw = FromValued<AppGeneralProps>;
+
 export const useAppGeneralProps = () => {
     const isRendering = useValue(false);
     const formula = useValue(defaultPolynomials[0]);
@@ -35,71 +35,52 @@ export const useAppGeneralProps = () => {
 export const useAppProps = () => {
     const generalProps = useAppGeneralProps();
     const stateMachine = useStateMachine();
-    const stateMachineInitFns = useStateMachineInitFns(generalProps, stateMachine);
-    useGeneralPropTriggers(generalProps, stateMachineInitFns);
+    useGeneralPropTriggers(generalProps, stateMachine);
 
-    return { generalProps, stateMachine, calculateNewPassFn: stateMachineInitFns.calculateNewPassFn };
+    return { generalProps, stateMachine };
 }
 
 /* eslint-disable react-hooks/exhaustive-deps */
-const useGeneralPropTriggers = (props: AppGeneralProps, initFns: ToVoidFn<StateMachineInitFns>) => {
+const useGeneralPropTriggers = (props: AppGeneralProps, stateMachine: StateMachineProps) => {
     // Because there are cases where multiple types of property change at the same time, these are ranked in a
     // sort of priority system. Things at the end are most important.
 
-    const triggeredFn = useRef<DebouncedFunc<() => void>>();
-    const triggerFn = (fn: () => void) => {
+    const triggeredFn = useRef<DebouncedFunc<RenderFnToBool>>();
+    const triggerFn = (fn: RenderFnToBool) => {
         triggeredFn.current?.cancel();
         const _fn = throttle(fn);
         triggeredFn.current = _fn;
-        _fn();
+        props.isRendering.value = !!_fn(devalue(props), stateMachine);
     }
 
     // Recolor the existing PDB
-    useEffect(() => { triggerFn(initFns.recolorPassFn); }, [
+    useEffect(() => { triggerFn(stateMachine.initFns.recolorPassFn); }, [
         props.colorScheme.value, props.hueOffset.value, props.chromaticity.value,
         props.dropoff.value, props.renderRoots.value, props.staticHues.value,
     ]);
 
     // Recalculate the existing formula / roots
-    useEffect(() => { triggerFn(initFns.recalculatePassFn); }, [
+    useEffect(() => { triggerFn(stateMachine.initFns.recalculatePassFn); }, [
         props.transform.value.scale, props.transform.value.translate,
     ]);
 
     // Calculate from the start, with fresh formula / roots
-    useEffect(() => { triggerFn(initFns.calculateNewPassFn); }, [
+    useEffect(() => { triggerFn(stateMachine.initFns.calculateNewPassFn); }, [
         props.formula.value, props.iterMethod.value
     ]);
+
+    useEffect(() => {
+        if (!props.isRendering.value) {
+            stateMachine.initFns.updateIsRenderingPassFn(stateMachine, props.isRendering.value);
+        } else if (!stateMachine.data.current) {
+            // New run, WASM just updated
+            triggerFn(stateMachine.initFns.calculateNewPassFn);
+        }
+    }, [
+        props.isRendering.value
+    ])
 }
 /* eslint-enable react-hooks/exhaustive-deps */
-
-type ToVoidFn<T extends object> = { [K in keyof T]: () => void };
-const useStateMachineInitFns = (generalProps: AppGeneralProps, stateMachine: StateMachineProps): ToVoidFn<StateMachineInitFns> => {
-    const { formula, isRendering } = generalProps;
-
-    const newStateMachinePass = (fn: RenderFn) => {
-        if (!isValidFormula(formula.value)) return;
-        isRendering.value = true;
-        fn(generalProps, stateMachine);
-    }
-
-    type VoidInitFns = ToVoidFn<StateMachineInitFns>;
-    const initFns: VoidInitFns = {} as VoidInitFns;
-    for (const [k, fn] of Object.entries(stateMachine.initFns)) {
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        (initFns as Record<string, RenderFn>)[k] = () => { newStateMachinePass(fn as RenderFn) };
-    }
-
-    // Bit of a special case here, as we need to recalculate if we're not done the
-    // full calculations. This is because the PDB won't have been filled out completely
-    initFns.recolorPassFn = () => {
-        const data = stateMachine.data.current;
-        if (!data) return;
-        if (data.state == State.RENDER_PASS) { initFns.recalculatePassFn(); return; }
-        newStateMachinePass(stateMachine.initFns.recolorPassFn)
-    };
-
-    return initFns;
-}
 
 export const useAppOnKeyDown = (props: AppGeneralProps) => {
     const { formula, iterMethod, curPoint, transform } = props;
