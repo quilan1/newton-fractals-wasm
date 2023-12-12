@@ -11,18 +11,18 @@ export const calculateRow = (fz: Polynomial, roots: Roots, transform: Transform,
 
 export const renderRow = (
     context: CanvasRenderingContext2D, roots: Roots, pdb: PixelDataBuffer, pdbRow: PixelDataBuffer, renderScale: number, row: number,
-    dropoff: number,
+    dropoff: number, invertedLightness: boolean,
 ) => {
     const _dropoff = calcDropoff(dropoff);
-    getNewton().__renderRow(context, roots, pdb, pdbRow, renderScale, row, _dropoff);
+    getNewton().__renderRow(context, roots, pdb, pdbRow, renderScale, row, _dropoff, invertedLightness);
 }
 
 export const recolorRow = (
     context: CanvasRenderingContext2D, roots: Roots, pdb: PixelDataBuffer, row: number,
-    dropoff: number,
+    dropoff: number, invertedLightness: boolean,
 ) => {
     const _dropoff = calcDropoff(dropoff);
-    getNewton().__recolorRow(context, roots, pdb, row, _dropoff);
+    getNewton().__recolorRow(context, roots, pdb, row, _dropoff, invertedLightness);
 }
 
 export const newImagePixelDataBuffer = (): PixelDataBuffer => {

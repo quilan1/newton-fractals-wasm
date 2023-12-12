@@ -9,13 +9,19 @@ pub fn pixel_color<P: Into<PixelDataDetail>>(
     roots: &[OklchColor],
     luminance_max: f32,
     dropoff: f32,
+    invert: bool,
 ) -> [u8; 4] {
     let PixelDataDetail { root_index, frac } = pixel_data.into();
     if frac == 1.0 {
-        return [0, 0, 0, 255];
+        return if invert {
+            [255, 255, 255, 255]
+        } else {
+            [0, 0, 0, 255]
+        };
     }
     let v = 1. - brightness_transform(frac, dropoff);
     let v = v.ilerp_clamped(0., luminance_max);
+    let v = if invert { 1. - v } else { v };
 
     let OklchColor { h, c } = roots[root_index];
     let rgba: Srgba = Oklch::new(v, c, h).into_color();

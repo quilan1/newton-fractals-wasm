@@ -96,6 +96,7 @@ fn calculate_z_start(zoom: f32, row: usize, num_pixels: usize) -> (Complex32, f3
 }
 
 #[wasm_bindgen(js_name = __renderRow)]
+#[allow(clippy::too_many_arguments)]
 pub fn render_row(
     ctx: &web_sys::CanvasRenderingContext2d,
     roots: &Roots,
@@ -104,6 +105,7 @@ pub fn render_row(
     render_scale: usize,
     row: usize,
     dropoff: f32,
+    invert: bool,
 ) -> Result<(), JsValue> {
     let pdb_row_offset = row * canvas_size();
     let pdb_block_len = canvas_size() * render_scale;
@@ -117,7 +119,7 @@ pub fn render_row(
         canvas_pixels,
         &row_pdb.pixel_data,
         render_scale,
-        |input| pixel_color(*input, &roots.0.colors, luminance_max, dropoff),
+        |input| pixel_color(*input, &roots.0.colors, luminance_max, dropoff, invert),
         |output, pixel| output.copy_from_slice(pixel),
     );
 
@@ -144,6 +146,7 @@ pub fn recolor_row(
     pdb: &mut PixelDataBuffer,
     row: usize,
     dropoff: f32,
+    invert: bool,
 ) -> Result<(), JsValue> {
     let pdb_row_offset = row * canvas_size();
     let pdb_block_len = canvas_size();
@@ -157,7 +160,7 @@ pub fn recolor_row(
         canvas_pixels,
         pdb_slice,
         1,
-        |input| pixel_color(*input, &roots.0.colors, luminance_max, dropoff),
+        |input| pixel_color(*input, &roots.0.colors, luminance_max, dropoff, invert),
         |output, pixel| output.copy_from_slice(pixel),
     );
 

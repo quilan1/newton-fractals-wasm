@@ -11,21 +11,21 @@ import { AppGeneralPropsRaw } from "../(components)/app-props";
 export const renderToCanvasRow = (data: RenderStateData, context: CanvasRenderingContext2D) => {
     assert(!!data.renderData && !!data.fractalData);
 
-    const { transform, iterMethod, dropoff } = data.generalProps;
+    const { transform, iterMethod, dropoff, invertedLightness } = data.generalProps;
     const { row, scaleFactor } = data.renderData;
     const { fz, roots, pdb } = data.fractalData;
     const pdbRow = calculateRow(fz, roots, transform, iterMethod, 1 << scaleFactor, row);
-    renderRow(context, roots, pdb, pdbRow, 1 << scaleFactor, row, dropoff);
+    renderRow(context, roots, pdb, pdbRow, 1 << scaleFactor, row, dropoff, invertedLightness);
     pdbRow.free();
 }
 
 export const recolorCanvasRow = (data: RenderStateData, context: CanvasRenderingContext2D) => {
     assert(!!data.renderData && !!data.fractalData);
 
-    const { dropoff } = data.generalProps;
+    const { dropoff, invertedLightness } = data.generalProps;
     const { row } = data.renderData;
     const { roots, pdb } = data.fractalData;
-    recolorRow(context, roots, pdb, row, dropoff);
+    recolorRow(context, roots, pdb, row, dropoff, invertedLightness);
 }
 
 export const drawRoots = (data: RenderStateData, context: CanvasRenderingContext2D) => {

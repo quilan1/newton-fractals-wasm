@@ -23,13 +23,17 @@ export const useAppGeneralProps = () => {
     const dropoff = useValue(0.5);
     const renderRoots = useValue(false);
     const staticHues = useValue(false);
+    const invertedLightness = useValue(false);
 
     useEffect(() => {
         transform.value = transformIdent();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formula.value]);
 
-    return { isRendering, formula, iterMethod, curPoint, transform, colorScheme, hueOffset, chromaticity, dropoff, renderRoots, staticHues };
+    return {
+        isRendering, formula, iterMethod, curPoint, transform, colorScheme, hueOffset, chromaticity,
+        dropoff, renderRoots, staticHues, invertedLightness
+    };
 }
 
 export const useAppProps = () => {
@@ -57,6 +61,7 @@ const useGeneralPropTriggers = (props: AppGeneralProps, stateMachine: StateMachi
     useEffect(() => { triggerFn(stateMachine.initFns.recolorPassFn); }, [
         props.colorScheme.value, props.hueOffset.value, props.chromaticity.value,
         props.dropoff.value, props.renderRoots.value, props.staticHues.value,
+        props.invertedLightness.value
     ]);
 
     // Recalculate the existing formula / roots
