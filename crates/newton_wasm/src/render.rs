@@ -106,6 +106,7 @@ pub fn render_row(
     row: usize,
     dropoff: f32,
     lightness_mode: u32,
+    is_dark_non_convergence: bool,
 ) -> Result<(), JsValue> {
     let pdb_row_offset = row * canvas_size();
     let pdb_block_len = canvas_size() * render_scale;
@@ -126,6 +127,7 @@ pub fn render_row(
                 luminance_max,
                 dropoff,
                 lightness_mode.into(),
+                is_dark_non_convergence,
             )
         },
         |output, pixel| output.copy_from_slice(pixel),
@@ -155,6 +157,7 @@ pub fn recolor_row(
     row: usize,
     dropoff: f32,
     lightness_mode: u32,
+    is_dark_non_convergence: bool,
 ) -> Result<(), JsValue> {
     let pdb_row_offset = row * canvas_size();
     let pdb_block_len = canvas_size();
@@ -175,6 +178,7 @@ pub fn recolor_row(
                 luminance_max,
                 dropoff,
                 lightness_mode.into(),
+                is_dark_non_convergence,
             )
         },
         |output, pixel| output.copy_from_slice(pixel),

@@ -32,14 +32,15 @@ pub fn pixel_color<P: Into<PixelDataDetail>>(
     luminance_max: f32,
     dropoff: f32,
     lightness_mode: LightnessMode,
+    is_dark_non_convergence: bool,
 ) -> [u8; 4] {
     use LightnessMode as LM;
 
     let PixelDataDetail { root_index, frac } = pixel_data.into();
     if frac == 1.0 {
-        return match lightness_mode {
-            LM::Normal | LM::Parabola => [0, 0, 0, 255],
-            LM::Inverted | LM::InvertedParabola => [255, 255, 255, 255],
+        return match is_dark_non_convergence {
+            true => [0, 0, 0, 255],
+            false => [255, 255, 255, 255],
         };
     }
 

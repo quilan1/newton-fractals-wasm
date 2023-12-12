@@ -40,6 +40,21 @@ export const getLightnessMode = (lightnessMode: LightnessMode) => {
     }
 }
 
+export enum NonConvergence {
+    Black = "Black",
+    White = "White",
+}
+
+export const getNonConvergence = (nonConvergence: NonConvergence): boolean => {
+    switch (nonConvergence) {
+        case NonConvergence.Black: return true;
+        case NonConvergence.White: return false;
+        default:
+            const mode: never = nonConvergence;
+            throw new Error(`nonConvergence ${mode} not accounted for`);
+    }
+}
+
 export type Transform = _Transform;
 export const __newTransform = (scale: number, x: number, y: number): Transform => {
     return newTransform(scale, x, y);

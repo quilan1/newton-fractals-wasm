@@ -1,6 +1,6 @@
 import { transformIdent } from "../(util)/transform";
 import { FromValued, devalue, useValue } from "../(util)/valued";
-import { IterRootMethod, LightnessMode } from "../(wasm-wrapper)/structs";
+import { IterRootMethod, LightnessMode, NonConvergence } from "../(wasm-wrapper)/structs";
 import { defaultPolynomials } from "./settings";
 import { RenderFnToBool, StateMachineProps, useStateMachine } from "../(state-machine)/state-machine";
 import { useEffect, useRef } from "react";
@@ -17,13 +17,14 @@ export const useAppGeneralProps = () => {
     const iterMethod = useValue(IterRootMethod.NewtonsMethod);
     const curPoint = useValue("");
     const transform = useValue(transformIdent());
+    const lightnessMode = useValue(LightnessMode.Normal);
+    const nonConvergence = useValue(NonConvergence.Black);
     const colorScheme = useValue(ColorScheme.CONTRASTING_HUES);
     const hueOffset = useValue(0.0);
     const chromaticity = useValue(0.25);
     const dropoff = useValue(0.5);
     const renderRoots = useValue(false);
     const staticHues = useValue(false);
-    const lightnessMode = useValue(LightnessMode.Normal);
 
     useEffect(() => {
         transform.value = transformIdent();
@@ -31,8 +32,8 @@ export const useAppGeneralProps = () => {
     }, [formula.value]);
 
     return {
-        isRendering, formula, iterMethod, curPoint, transform, colorScheme, hueOffset, chromaticity,
-        dropoff, renderRoots, staticHues, lightnessMode
+        isRendering, formula, iterMethod, curPoint, transform, lightnessMode, nonConvergence,
+        colorScheme, hueOffset, chromaticity, dropoff, renderRoots, staticHues,
     };
 }
 
@@ -59,9 +60,9 @@ const useGeneralPropTriggers = (props: AppGeneralProps, stateMachine: StateMachi
 
     // Recolor the existing PDB
     useEffect(() => { triggerFn(stateMachine.initFns.recolorPassFn); }, [
+        props.lightnessMode.value, props.nonConvergence.value,
         props.colorScheme.value, props.hueOffset.value, props.chromaticity.value,
         props.dropoff.value, props.renderRoots.value, props.staticHues.value,
-        props.lightnessMode.value
     ]);
 
     // Recalculate the existing formula / roots
@@ -73,17 +74,6 @@ const useGeneralPropTriggers = (props: AppGeneralProps, stateMachine: StateMachi
     useEffect(() => { triggerFn(stateMachine.initFns.calculateNewPassFn); }, [
         props.formula.value, props.iterMethod.value
     ]);
-
-    useEffect(() => {
-        if (!props.isRendering.value) {
-            stateMachine.initFns.updateIsRenderingPassFn(stateMachine, props.isRendering.value);
-        } else if (!stateMachine.data.current) {
-            // New run, WASM just updated
-            triggerFn(stateMachine.initFns.calculateNewPassFn);
-        }
-    }, [
-        props.isRendering.value
-    ])
 }
 /* eslint-enable react-hooks/exhaustive-deps */
 

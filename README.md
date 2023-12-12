@@ -60,6 +60,7 @@ For more details about Newton's Method, I recommend reading [The Wiki](https://e
   * `Inverted`: Opposite of `Normal`. Chaos is light, roots are dark.
   * `Parabola`: Roots and chaos are light, mid-regions are dark.
   * `Inverted Parabola`: Inverse of `Parabola`.
+* `Chaos Color`: Areas that do not converge to any root are colored either black or white.
 * `Color Scheme`: The three color schemes function as such:
   * `Contrasting Hues`: Colors are initially chosen via the `Linear Hue` scheme. Once that's done though, every other hue is interleaved to produce maximal adjacent hue differences. This yields a highly contrasting set of hues, rotationally.
   * `Linear Hue`: Every root gets a unique hue based on the root's polar angle & radius. 'Red' is at 0° (positive real axis), 'Green' at 120°, 'Blue' at 240°. The radius of the root determines the chromaticity of the root; roots closer to the origin will yield paler colors than those further away.
