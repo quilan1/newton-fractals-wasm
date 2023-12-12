@@ -9,7 +9,7 @@ mod roots;
 ///////////////////////////////////////////////////////////////////
 
 pub use calculate::{calculate_row, IterRoot};
-pub use colors::{brightness_transform, calc_luminance_max, pixel_color};
+pub use colors::{brightness_transform, calc_luminance_max, pixel_color, LightnessMode};
 pub use lerp::Lerp;
 pub use pixel_data::{PixelData, PixelDataDetail};
 pub use polynomial::FPolynomial as Polynomial;

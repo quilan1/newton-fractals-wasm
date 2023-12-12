@@ -1,6 +1,6 @@
 import { transformIdent } from "../(util)/transform";
 import { FromValued, devalue, useValue } from "../(util)/valued";
-import { IterRootMethod } from "../(wasm-wrapper)/structs";
+import { IterRootMethod, LightnessMode } from "../(wasm-wrapper)/structs";
 import { defaultPolynomials } from "./settings";
 import { RenderFnToBool, StateMachineProps, useStateMachine } from "../(state-machine)/state-machine";
 import { useEffect, useRef } from "react";
@@ -23,7 +23,7 @@ export const useAppGeneralProps = () => {
     const dropoff = useValue(0.5);
     const renderRoots = useValue(false);
     const staticHues = useValue(false);
-    const invertedLightness = useValue(false);
+    const lightnessMode = useValue(LightnessMode.Normal);
 
     useEffect(() => {
         transform.value = transformIdent();
@@ -32,7 +32,7 @@ export const useAppGeneralProps = () => {
 
     return {
         isRendering, formula, iterMethod, curPoint, transform, colorScheme, hueOffset, chromaticity,
-        dropoff, renderRoots, staticHues, invertedLightness
+        dropoff, renderRoots, staticHues, lightnessMode
     };
 }
 
@@ -61,7 +61,7 @@ const useGeneralPropTriggers = (props: AppGeneralProps, stateMachine: StateMachi
     useEffect(() => { triggerFn(stateMachine.initFns.recolorPassFn); }, [
         props.colorScheme.value, props.hueOffset.value, props.chromaticity.value,
         props.dropoff.value, props.renderRoots.value, props.staticHues.value,
-        props.invertedLightness.value
+        props.lightnessMode.value
     ]);
 
     // Recalculate the existing formula / roots

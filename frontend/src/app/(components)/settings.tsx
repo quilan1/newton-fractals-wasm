@@ -6,7 +6,7 @@ import { transformIdent } from '../(util)/transform';
 import { useValue } from '../(util)/valued';
 import { usePeriodicFn } from '../(util)/periodic-fn';
 import { randomCycle2, randomFormula } from './random-formulas';
-import { IterRootMethod } from '../(wasm-wrapper)/structs';
+import { IterRootMethod, LightnessMode } from '../(wasm-wrapper)/structs';
 import { AppGeneralProps } from './app-props';
 import { ColorScheme } from '../(state-machine)/render';
 
@@ -158,7 +158,7 @@ const FormulaSettings = (props: AppGeneralProps) => {
 ///////////////////////////////////////////////////////////////////
 
 const RenderPassSettings = (props: AppGeneralProps) => {
-    const { colorScheme, hueOffset, chromaticity, dropoff, renderRoots, staticHues, invertedLightness } = props;
+    const { colorScheme, hueOffset, chromaticity, dropoff, renderRoots, staticHues, lightnessMode } = props;
 
     const onChangeScheme = (e: ChangeEvent<HTMLSelectElement>) => { colorScheme.value = e.target.value as ColorScheme; }
     const onChangeHueOffset = (e: ChangeEvent<HTMLInputElement>) => { hueOffset.value = Number.parseFloat(e.target.value); }
@@ -166,10 +166,14 @@ const RenderPassSettings = (props: AppGeneralProps) => {
     const onChangeDropoff = (e: ChangeEvent<HTMLInputElement>) => { dropoff.value = Number.parseFloat(e.target.value); }
     const onChangeDrawRoots = (e: ChangeEvent<HTMLInputElement>) => { renderRoots.value = e.target.checked; }
     const onChangeStaticHues = (e: ChangeEvent<HTMLInputElement>) => { staticHues.value = e.target.checked; }
-    const onChangeInvertedLightness = (e: ChangeEvent<HTMLInputElement>) => { invertedLightness.value = e.target.checked; }
+    const onChangeLightnessMode = (e: ChangeEvent<HTMLSelectElement>) => { lightnessMode.value = e.target.value as LightnessMode; }
 
     return (
         <div className={styles.renderPassSettings}>
+            <label>Lightness:</label>
+            <select value={lightnessMode.value} title={desc.lightnessMode} onChange={onChangeLightnessMode}>
+                {Object.entries(LightnessMode).map(([k, v]) => <option key={k} value={v}>{v}</option>)}
+            </select>
             <label>Color Scheme:</label>
             <select
                 className={styles.colorScheme}
@@ -197,8 +201,6 @@ const RenderPassSettings = (props: AppGeneralProps) => {
             <input type="checkbox" checked={renderRoots.value} title={desc.showRoots} onChange={onChangeDrawRoots} />
             <label>Static Hues:</label>
             <input type="checkbox" checked={staticHues.value} title={desc.staticHues} onChange={onChangeStaticHues} />
-            <label>Inverted Lightness:</label>
-            <input type="checkbox" checked={invertedLightness.value} title={desc.invertedLightness} onChange={onChangeInvertedLightness} />
         </div>
     )
 }
@@ -259,7 +261,7 @@ const desc = {
     shadingCurve: 'Change the level of exponential falloff for the shading algorithm',
     showRoots: 'Draw a circle around the roots of the polynomial in the complex plane',
     staticHues: 'Color hues always start at 0°, instead of the first root\'s complex argument',
-    invertedLightness: 'Chaotic regions converge to white, instead of black'
+    lightnessMode: 'Changes the way chaotic & stable regions render lightness'
 }
 
 export const defaultPolynomials = [

@@ -105,7 +105,7 @@ pub fn render_row(
     render_scale: usize,
     row: usize,
     dropoff: f32,
-    invert: bool,
+    lightness_mode: u32,
 ) -> Result<(), JsValue> {
     let pdb_row_offset = row * canvas_size();
     let pdb_block_len = canvas_size() * render_scale;
@@ -119,7 +119,15 @@ pub fn render_row(
         canvas_pixels,
         &row_pdb.pixel_data,
         render_scale,
-        |input| pixel_color(*input, &roots.0.colors, luminance_max, dropoff, invert),
+        |input| {
+            pixel_color(
+                *input,
+                &roots.0.colors,
+                luminance_max,
+                dropoff,
+                lightness_mode.into(),
+            )
+        },
         |output, pixel| output.copy_from_slice(pixel),
     );
 
@@ -146,7 +154,7 @@ pub fn recolor_row(
     pdb: &mut PixelDataBuffer,
     row: usize,
     dropoff: f32,
-    invert: bool,
+    lightness_mode: u32,
 ) -> Result<(), JsValue> {
     let pdb_row_offset = row * canvas_size();
     let pdb_block_len = canvas_size();
@@ -160,7 +168,15 @@ pub fn recolor_row(
         canvas_pixels,
         pdb_slice,
         1,
-        |input| pixel_color(*input, &roots.0.colors, luminance_max, dropoff, invert),
+        |input| {
+            pixel_color(
+                *input,
+                &roots.0.colors,
+                luminance_max,
+                dropoff,
+                lightness_mode.into(),
+            )
+        },
         |output, pixel| output.copy_from_slice(pixel),
     );
 
